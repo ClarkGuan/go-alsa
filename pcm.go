@@ -7,6 +7,8 @@ package alsa
 // static char *no_const(const char *s) { return (char *)s; }
 //
 // static void _snd_pcm_hw_params_alloca(snd_pcm_hw_params_t **ptr) { snd_pcm_hw_params_alloca(ptr); }
+//
+// static void _snd_pcm_info_alloca(snd_pcm_info_t **ptr) { snd_pcm_info_alloca(ptr); }
 import "C"
 import (
 	"runtime"
@@ -20,6 +22,8 @@ type PCMType int
 type PCMState int
 type PCMAccess int
 type PCMFormat int
+type PCMClass int
+type PCMSubClass int
 
 const (
 	SndPcmStreamPlayback = StreamType(C.SND_PCM_STREAM_PLAYBACK)
@@ -127,6 +131,14 @@ const (
 	SndPcmFormatDsdU32Le         = PCMFormat(C.SND_PCM_FORMAT_DSD_U32_LE)
 	SndPcmFormatDsdU16Be         = PCMFormat(C.SND_PCM_FORMAT_DSD_U16_BE)
 	SndPcmFormatDsdU32Be         = PCMFormat(C.SND_PCM_FORMAT_DSD_U32_BE)
+
+	SndPcmClassGeneric   = PCMClass(C.SND_PCM_CLASS_GENERIC)
+	SndPcmClassMulti     = PCMClass(C.SND_PCM_CLASS_MULTI)
+	SndPcmClassModem     = PCMClass(C.SND_PCM_CLASS_MODEM)
+	SndPcmClassDigitizer = PCMClass(C.SND_PCM_CLASS_DIGITIZER)
+
+	SndPcmSubclassGenericMix = PCMSubClass(C.SND_PCM_SUBCLASS_GENERIC_MIX)
+	SndPcmSubclassMultiMix   = PCMSubClass(C.SND_PCM_SUBCLASS_MULTI_MIX)
 )
 
 type PollFd struct {
@@ -166,11 +178,12 @@ func OpenPCM(name string, stream StreamType, mode int) (*PCM, error) {
 func (pcm *PCM) Close() error {
 	for {
 		p := unsafe.Pointer(pcm.inner)
+		c := pcm.inner
 		if p == nil {
 			break
 		}
 		if atomic.CompareAndSwapPointer(&p, p, nil) {
-			rc := C.snd_pcm_close((*C.snd_pcm_t)(p))
+			rc := C.snd_pcm_close(c)
 			if rc < 0 {
 				panic(NewError(int(rc)))
 			}
@@ -200,6 +213,17 @@ func (pcm *PCM) NonBlock(enable bool) error {
 		return NewError(int(rc))
 	}
 	return nil
+}
+
+func (pcm *PCM) Info() (*PCMInfo, error) {
+	info := new(PCMInfo)
+	C._snd_pcm_info_alloca(&info.inner)
+	rc := C.snd_pcm_info(pcm.inner, info.inner)
+	if rc < 0 {
+		return nil, NewError(int(rc))
+	}
+	runtime.SetFinalizer(info, (*PCMInfo).Close)
+	return info, nil
 }
 
 func (pcm *PCM) Prepare() error {
@@ -446,7 +470,7 @@ func (pcm *PCM) PollDescriptorsREvents(fds []PollFd) (int16, error) {
 	return int16(revents), nil
 }
 
-func (pcm *PCM) InstallHeParams(params *PCMHwParams) error {
+func (pcm *PCM) InstallHwParams(params *PCMHwParams) error {
 	rc := C.snd_pcm_hw_params(pcm.inner, params.inner)
 	if rc < 0 {
 		return NewError(int(rc))
@@ -498,11 +522,12 @@ func PCMHwParamsCurrent(pcm *PCM) (*PCMHwParams, error) {
 func (params *PCMHwParams) Close() error {
 	for {
 		p := unsafe.Pointer(params.inner)
+		i := params.inner
 		if p == nil {
 			break
 		}
 		if atomic.CompareAndSwapPointer(&p, p, nil) {
-			C.snd_pcm_hw_params_free((*C.snd_pcm_hw_params_t)(p))
+			C.snd_pcm_hw_params_free(i)
 			runtime.SetFinalizer(params, nil)
 		}
 	}
@@ -831,9 +856,76 @@ func (params *PCMHwParams) SetRate(rate, dir int) error {
 }
 
 func (params *PCMHwParams) Install() error {
-	return params.pcm.InstallHeParams(params)
+	return params.pcm.InstallHwParams(params)
 }
 
 func (params *PCMHwParams) Uninstall() error {
 	return params.pcm.UninstallHwParams()
+}
+
+type PCMInfo struct {
+	inner *C.snd_pcm_info_t
+}
+
+func (info *PCMInfo) Close() error {
+	for {
+		p := unsafe.Pointer(info.inner)
+		i := info.inner
+		if p == nil {
+			break
+		}
+		if atomic.CompareAndSwapPointer(&p, p, nil) {
+			C.snd_pcm_info_free(i)
+			runtime.SetFinalizer(info, nil)
+		}
+	}
+	return nil
+}
+
+func (info *PCMInfo) GetDevice() int {
+	return int(C.snd_pcm_info_get_device(info.inner))
+}
+
+func (info *PCMInfo) GetSubDevice() int {
+	return int(C.snd_pcm_info_get_subdevice(info.inner))
+}
+
+func (info *PCMInfo) GetStreamType() StreamType {
+	return StreamType(C.snd_pcm_info_get_stream(info.inner))
+}
+
+func (info *PCMInfo) GetCard() (int, error) {
+	rc := C.snd_pcm_info_get_card(info.inner)
+	if rc < 0 {
+		return -1, NewError(int(rc))
+	}
+	return int(rc), nil
+}
+
+func (info *PCMInfo) GetID() string {
+	return C.GoString(C.no_const(C.snd_pcm_info_get_id(info.inner)))
+}
+
+func (info *PCMInfo) GetName() string {
+	return C.GoString(C.no_const(C.snd_pcm_info_get_name(info.inner)))
+}
+
+func (info *PCMInfo) GetSubDeviceName() string {
+	return C.GoString(C.no_const(C.snd_pcm_info_get_subdevice_name(info.inner)))
+}
+
+func (info *PCMInfo) GetClass() PCMClass {
+	return PCMClass(C.snd_pcm_info_get_class(info.inner))
+}
+
+func (info *PCMInfo) GetSubClass() PCMSubClass {
+	return PCMSubClass(C.snd_pcm_info_get_subclass(info.inner))
+}
+
+func (info *PCMInfo) GetSubDevicesCount() int {
+	return int(C.snd_pcm_info_get_subdevices_count(info.inner))
+}
+
+func (info *PCMInfo) GetSubDevicesAvailableCount() int {
+	return int(C.snd_pcm_info_get_subdevices_avail(info.inner))
 }
