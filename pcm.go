@@ -18,10 +18,61 @@ import (
 )
 
 type StreamType int
+
+func (stream StreamType) Name() string {
+	return C.GoString(C.no_const(C.snd_pcm_stream_name(C.snd_pcm_stream_t(stream))))
+}
+
+func (stream StreamType) String() string {
+	return stream.Name()
+}
+
 type PCMType int
+
+func (ty PCMType) Name() string {
+	return C.GoString(C.no_const(C.snd_pcm_type_name(C.snd_pcm_type_t(ty))))
+}
+
+func (ty PCMType) String() string {
+	return ty.Name()
+}
+
 type PCMState int
+
+func (state PCMState) Name() string {
+	return C.GoString(C.no_const(C.snd_pcm_state_name(C.snd_pcm_state_t(state))))
+}
+
 type PCMAccess int
+
+func (access PCMAccess) Name() string {
+	return C.GoString(C.no_const(C.snd_pcm_access_name(C.snd_pcm_access_t(access))))
+}
+
+func (access PCMAccess) String() string {
+	return access.Name()
+}
+
 type PCMFormat int
+
+func (format PCMFormat) Name() string {
+	return C.GoString(C.no_const(C.snd_pcm_format_name(C.snd_pcm_format_t(format))))
+}
+
+func (format PCMFormat) Description() string {
+	return C.GoString(C.no_const(C.snd_pcm_format_description(C.snd_pcm_format_t(format))))
+}
+
+func (format PCMFormat) String() string {
+	return format.Description()
+}
+
+func PCMFormatName(name string) PCMFormat {
+	cName := C.CString(name)
+	defer C.free(unsafe.Pointer(cName))
+	return PCMFormat(C.snd_pcm_format_value(cName))
+}
+
 type PCMClass int
 type PCMSubClass int
 
