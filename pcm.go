@@ -446,18 +446,49 @@ func (pcm *PCM) PollDescriptorsREvents(fds []PollFd) (int16, error) {
 	return int16(revents), nil
 }
 
+func (pcm *PCM) InstallHeParams(params *PCMHwParams) error {
+	rc := C.snd_pcm_hw_params(pcm.inner, params.inner)
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
+func (pcm *PCM) UninstallHwParams() error {
+	rc := C.snd_pcm_hw_free(pcm.inner)
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
 type PCMHwParams struct {
 	inner *C.snd_pcm_hw_params_t
 	pcm   *PCM
 }
 
-func PCMHwParamsAnyOf(pcm *PCM) (*PCMHwParams, error) {
+func PCMHwParamsAny(pcm *PCM) (*PCMHwParams, error) {
 	params := &PCMHwParams{}
 	C._snd_pcm_hw_params_alloca(&params.inner)
 	runtime.SetFinalizer(params, (*PCMHwParams).Close)
 
-	if err := params.anyOf(pcm); err != nil {
-		return nil, err
+	rc := C.snd_pcm_hw_params_any(pcm.inner, params.inner)
+	if rc < 0 {
+		return nil, NewError(int(rc))
+	}
+	params.pcm = pcm
+
+	return params, nil
+}
+
+func PCMHwParamsCurrent(pcm *PCM) (*PCMHwParams, error) {
+	params := &PCMHwParams{}
+	C._snd_pcm_hw_params_alloca(&params.inner)
+	runtime.SetFinalizer(params, (*PCMHwParams).Close)
+
+	rc := C.snd_pcm_hw_params_current(pcm.inner, params.inner)
+	if rc < 0 {
+		return nil, NewError(int(rc))
 	}
 	params.pcm = pcm
 
@@ -476,14 +507,6 @@ func (params *PCMHwParams) Close() error {
 		}
 	}
 
-	return nil
-}
-
-func (params *PCMHwParams) anyOf(pcm *PCM) error {
-	rc := C.snd_pcm_hw_params_any(pcm.inner, params.inner)
-	if rc < 0 {
-		return NewError(int(rc))
-	}
 	return nil
 }
 
@@ -507,7 +530,7 @@ func (params *PCMHwParams) IsMonotonic() bool {
 	return C.snd_pcm_hw_params_is_monotonic(params.inner) != 0
 }
 
-func (params *PCMHwParams) CanOverrange() bool {
+func (params *PCMHwParams) CanOverRange() bool {
 	return C.snd_pcm_hw_params_can_overrange(params.inner) != 0
 }
 
@@ -805,4 +828,12 @@ func (params *PCMHwParams) SetRate(rate, dir int) error {
 		return NewError(int(rc))
 	}
 	return nil
+}
+
+func (params *PCMHwParams) Install() error {
+	return params.pcm.InstallHeParams(params)
+}
+
+func (params *PCMHwParams) Uninstall() error {
+	return params.pcm.UninstallHwParams()
 }
