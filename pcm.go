@@ -593,6 +593,24 @@ func (params *PCMHwParams) SetAccess(acs PCMAccess) error {
 	return nil
 }
 
+func (params *PCMHwParams) SetAccessFirst() (PCMAccess, error) {
+	var access C.snd_pcm_access_t
+	rc := C.snd_pcm_hw_params_set_access_first(params.pcm.inner, params.inner, &access)
+	if rc < 0 {
+		return -1, NewError(int(rc))
+	}
+	return PCMAccess(access), nil
+}
+
+func (params *PCMHwParams) SetAccessLast() (PCMAccess, error) {
+	var access C.snd_pcm_access_t
+	rc := C.snd_pcm_hw_params_set_access_last(params.pcm.inner, params.inner, &access)
+	if rc < 0 {
+		return -1, NewError(int(rc))
+	}
+	return PCMAccess(access), nil
+}
+
 func (params *PCMHwParams) GetFormat() (PCMFormat, error) {
 	var format C.snd_pcm_format_t
 	rc := C.snd_pcm_hw_params_get_format(params.inner, &format)
@@ -612,6 +630,177 @@ func (params *PCMHwParams) TestFormat(format PCMFormat) error {
 
 func (params *PCMHwParams) SetFormat(format PCMFormat) error {
 	rc := C.snd_pcm_hw_params_set_format(params.pcm.inner, params.inner, C.snd_pcm_format_t(format))
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
+func (params *PCMHwParams) SetFormatFirst() (PCMFormat, error) {
+	var format C.snd_pcm_format_t
+	rc := C.snd_pcm_hw_params_set_format_first(params.pcm.inner, params.inner, &format)
+	if rc < 0 {
+		return -1, NewError(int(rc))
+	}
+	return PCMFormat(format), nil
+}
+
+func (params *PCMHwParams) SetFormatLast() (PCMFormat, error) {
+	var format C.snd_pcm_format_t
+	rc := C.snd_pcm_hw_params_set_format_last(params.pcm.inner, params.inner, &format)
+	if rc < 0 {
+		return -1, NewError(int(rc))
+	}
+	return PCMFormat(format), nil
+}
+
+func (params *PCMHwParams) GetChannels() (int, error) {
+	var channels C.uint
+	rc := C.snd_pcm_hw_params_get_channels(params.inner, &channels)
+	if rc < 0 {
+		return 0, NewError(int(rc))
+	}
+	return int(channels), nil
+}
+
+func (params *PCMHwParams) GetChannelsMin() (int, error) {
+	var channels C.uint
+	rc := C.snd_pcm_hw_params_get_channels_min(params.inner, &channels)
+	if rc < 0 {
+		return 0, NewError(int(rc))
+	}
+	return int(channels), nil
+}
+
+func (params *PCMHwParams) GetChannelsMax() (int, error) {
+	var channels C.uint
+	rc := C.snd_pcm_hw_params_get_channels_max(params.inner, &channels)
+	if rc < 0 {
+		return 0, NewError(int(rc))
+	}
+	return int(channels), nil
+}
+
+func (params *PCMHwParams) TestChannels(channels int) error {
+	rc := C.snd_pcm_hw_params_test_channels(params.pcm.inner, params.inner, C.uint(channels))
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
+func (params *PCMHwParams) SetChannels(channels int) error {
+	rc := C.snd_pcm_hw_params_set_channels(params.pcm.inner, params.inner, C.uint(channels))
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
+func (params *PCMHwParams) SetChannelsMin() (int, error) {
+	var channels C.uint
+	rc := C.snd_pcm_hw_params_set_channels_min(params.pcm.inner, params.inner, &channels)
+	if rc < 0 {
+		return -1, NewError(int(rc))
+	}
+	return int(channels), nil
+}
+
+func (params *PCMHwParams) SetChannelsMax() (int, error) {
+	var channels C.uint
+	rc := C.snd_pcm_hw_params_set_channels_max(params.pcm.inner, params.inner, &channels)
+	if rc < 0 {
+		return -1, NewError(int(rc))
+	}
+	return int(channels), nil
+}
+
+func (params *PCMHwParams) SetChannelsNear(channels int) (int, error) {
+	cArg := C.uint(channels)
+	rc := C.snd_pcm_hw_params_set_channels_near(params.pcm.inner, params.inner, &cArg)
+	if rc < 0 {
+		return -1, NewError(int(rc))
+	}
+	return int(cArg), nil
+}
+
+func (params *PCMHwParams) SetChannelsFirst() (int, error) {
+	var channels C.uint
+	rc := C.snd_pcm_hw_params_set_channels_first(params.pcm.inner, params.inner, &channels)
+	if rc < 0 {
+		return -1, NewError(int(rc))
+	}
+	return int(channels), nil
+}
+
+func (params *PCMHwParams) SetChannelsLast() (int, error) {
+	var channels C.uint
+	rc := C.snd_pcm_hw_params_set_channels_last(params.pcm.inner, params.inner, &channels)
+	if rc < 0 {
+		return -1, NewError(int(rc))
+	}
+	return int(channels), nil
+}
+
+func Dir(i int) *int {
+	return &i
+}
+
+func (params *PCMHwParams) GetRate(dir *int) (int, error) {
+	var rate C.uint
+	var rc C.int
+	if dir == nil {
+		rc = C.snd_pcm_hw_params_get_rate(params.inner, &rate, nil)
+	} else {
+		i := C.int(*dir)
+		rc = C.snd_pcm_hw_params_get_rate(params.inner, &rate, &i)
+	}
+	if rc < 0 {
+		return -1, NewError(int(rc))
+	}
+	return int(rate), nil
+}
+
+func (params *PCMHwParams) GetRateMin(dir *int) (int, error) {
+	var rate C.uint
+	var rc C.int
+	if dir == nil {
+		rc = C.snd_pcm_hw_params_get_rate_min(params.inner, &rate, nil)
+	} else {
+		i := C.int(*dir)
+		rc = C.snd_pcm_hw_params_get_rate_min(params.inner, &rate, &i)
+	}
+	if rc < 0 {
+		return -1, NewError(int(rc))
+	}
+	return int(rate), nil
+}
+
+func (params *PCMHwParams) GetRateMax(dir *int) (int, error) {
+	var rate C.uint
+	var rc C.int
+	if dir == nil {
+		rc = C.snd_pcm_hw_params_get_rate_max(params.inner, &rate, nil)
+	} else {
+		i := C.int(*dir)
+		rc = C.snd_pcm_hw_params_get_rate_max(params.inner, &rate, &i)
+	}
+	if rc < 0 {
+		return -1, NewError(int(rc))
+	}
+	return int(rate), nil
+}
+
+func (params *PCMHwParams) TestRate(rate, dir int) error {
+	rc := C.snd_pcm_hw_params_test_rate(params.pcm.inner, params.inner, C.uint(rate), C.int(dir))
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
+func (params *PCMHwParams) SetRate(rate, dir int) error {
+	rc := C.snd_pcm_hw_params_set_rate(params.pcm.inner, params.inner, C.uint(rate), C.int(dir))
 	if rc < 0 {
 		return NewError(int(rc))
 	}
