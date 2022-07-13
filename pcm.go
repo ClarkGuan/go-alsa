@@ -1,6 +1,5 @@
 package alsa
 
-// #cgo LDFLAGS: -lasound
 //
 // #include <poll.h>
 // #include <alsa/asoundlib.h>
@@ -19,6 +18,8 @@ import (
 type StreamType int
 type PCMType int
 type PCMState int
+type PCMAccess int
+type PCMFormat int
 
 const (
 	SndPcmStreamPlayback = StreamType(C.SND_PCM_STREAM_PLAYBACK)
@@ -68,6 +69,64 @@ const (
 	SndPcmStatePaused       = PCMState(C.SND_PCM_STATE_PAUSED)
 	SndPcmStateSuspended    = PCMState(C.SND_PCM_STATE_SUSPENDED)
 	SndPcmStateDisconnected = PCMState(C.SND_PCM_STATE_DISCONNECTED)
+
+	SndPcmAccessMmapInterleaved    = PCMAccess(C.SND_PCM_ACCESS_MMAP_INTERLEAVED)
+	SndPcmAccessMmapNoninterleaved = PCMAccess(C.SND_PCM_ACCESS_MMAP_NONINTERLEAVED)
+	SndPcmAccessMmapComplex        = PCMAccess(C.SND_PCM_ACCESS_MMAP_COMPLEX)
+	SndPcmAccessRwInterleaved      = PCMAccess(C.SND_PCM_ACCESS_RW_INTERLEAVED)
+	SndPcmAccessRwNoninterleaved   = PCMAccess(C.SND_PCM_ACCESS_RW_NONINTERLEAVED)
+
+	SndPcmFormatS8               = PCMFormat(C.SND_PCM_FORMAT_S8)
+	SndPcmFormatU8               = PCMFormat(C.SND_PCM_FORMAT_U8)
+	SndPcmFormatS16Le            = PCMFormat(C.SND_PCM_FORMAT_S16_LE)
+	SndPcmFormatS16Be            = PCMFormat(C.SND_PCM_FORMAT_S16_BE)
+	SndPcmFormatU16Le            = PCMFormat(C.SND_PCM_FORMAT_U16_LE)
+	SndPcmFormatU16Be            = PCMFormat(C.SND_PCM_FORMAT_U16_BE)
+	SndPcmFormatS24Le            = PCMFormat(C.SND_PCM_FORMAT_S24_LE)
+	SndPcmFormatS24Be            = PCMFormat(C.SND_PCM_FORMAT_S24_BE)
+	SndPcmFormatU24Le            = PCMFormat(C.SND_PCM_FORMAT_U24_LE)
+	SndPcmFormatU24Be            = PCMFormat(C.SND_PCM_FORMAT_U24_BE)
+	SndPcmFormatS32Le            = PCMFormat(C.SND_PCM_FORMAT_S32_LE)
+	SndPcmFormatS32Be            = PCMFormat(C.SND_PCM_FORMAT_S32_BE)
+	SndPcmFormatU32Le            = PCMFormat(C.SND_PCM_FORMAT_U32_LE)
+	SndPcmFormatU32Be            = PCMFormat(C.SND_PCM_FORMAT_U32_BE)
+	SndPcmFormatFloatLe          = PCMFormat(C.SND_PCM_FORMAT_FLOAT_LE)
+	SndPcmFormatFloatBe          = PCMFormat(C.SND_PCM_FORMAT_FLOAT_BE)
+	SndPcmFormatFloat64Le        = PCMFormat(C.SND_PCM_FORMAT_FLOAT64_LE)
+	SndPcmFormatFloat64Be        = PCMFormat(C.SND_PCM_FORMAT_FLOAT64_BE)
+	SndPcmFormatIec958SubframeLe = PCMFormat(C.SND_PCM_FORMAT_IEC958_SUBFRAME_LE)
+	SndPcmFormatIec958SubframeBe = PCMFormat(C.SND_PCM_FORMAT_IEC958_SUBFRAME_BE)
+	SndPcmFormatMuLaw            = PCMFormat(C.SND_PCM_FORMAT_MU_LAW)
+	SndPcmFormatALaw             = PCMFormat(C.SND_PCM_FORMAT_A_LAW)
+	SndPcmFormatImaAdpcm         = PCMFormat(C.SND_PCM_FORMAT_IMA_ADPCM)
+	SndPcmFormatMpeg             = PCMFormat(C.SND_PCM_FORMAT_MPEG)
+	SndPcmFormatGsm              = PCMFormat(C.SND_PCM_FORMAT_GSM)
+	SndPcmFormatS20Le            = PCMFormat(C.SND_PCM_FORMAT_S20_LE)
+	SndPcmFormatS20Be            = PCMFormat(C.SND_PCM_FORMAT_S20_BE)
+	SndPcmFormatU20Le            = PCMFormat(C.SND_PCM_FORMAT_U20_LE)
+	SndPcmFormatU20Be            = PCMFormat(C.SND_PCM_FORMAT_U20_BE)
+	SndPcmFormatSpecial          = PCMFormat(C.SND_PCM_FORMAT_SPECIAL)
+	SndPcmFormatS243le           = PCMFormat(C.SND_PCM_FORMAT_S24_3LE)
+	SndPcmFormatS243be           = PCMFormat(C.SND_PCM_FORMAT_S24_3BE)
+	SndPcmFormatU243le           = PCMFormat(C.SND_PCM_FORMAT_U24_3LE)
+	SndPcmFormatU243be           = PCMFormat(C.SND_PCM_FORMAT_U24_3BE)
+	SndPcmFormatS203le           = PCMFormat(C.SND_PCM_FORMAT_S20_3LE)
+	SndPcmFormatS203be           = PCMFormat(C.SND_PCM_FORMAT_S20_3BE)
+	SndPcmFormatU203le           = PCMFormat(C.SND_PCM_FORMAT_U20_3LE)
+	SndPcmFormatU203be           = PCMFormat(C.SND_PCM_FORMAT_U20_3BE)
+	SndPcmFormatS183le           = PCMFormat(C.SND_PCM_FORMAT_S18_3LE)
+	SndPcmFormatS183be           = PCMFormat(C.SND_PCM_FORMAT_S18_3BE)
+	SndPcmFormatU183le           = PCMFormat(C.SND_PCM_FORMAT_U18_3LE)
+	SndPcmFormatU183be           = PCMFormat(C.SND_PCM_FORMAT_U18_3BE)
+	SndPcmFormatG72324           = PCMFormat(C.SND_PCM_FORMAT_G723_24)
+	SndPcmFormatG723241b         = PCMFormat(C.SND_PCM_FORMAT_G723_24_1B)
+	SndPcmFormatG72340           = PCMFormat(C.SND_PCM_FORMAT_G723_40)
+	SndPcmFormatG723401b         = PCMFormat(C.SND_PCM_FORMAT_G723_40_1B)
+	SndPcmFormatDsdU8            = PCMFormat(C.SND_PCM_FORMAT_DSD_U8)
+	SndPcmFormatDsdU16Le         = PCMFormat(C.SND_PCM_FORMAT_DSD_U16_LE)
+	SndPcmFormatDsdU32Le         = PCMFormat(C.SND_PCM_FORMAT_DSD_U32_LE)
+	SndPcmFormatDsdU16Be         = PCMFormat(C.SND_PCM_FORMAT_DSD_U16_BE)
+	SndPcmFormatDsdU32Be         = PCMFormat(C.SND_PCM_FORMAT_DSD_U32_BE)
 )
 
 type PollFd struct {
@@ -96,7 +155,7 @@ func OpenPCM(name string, stream StreamType, mode int) (*PCM, error) {
 	cName := C.CString(name)
 	defer C.free(unsafe.Pointer(cName))
 	rc := C.snd_pcm_open(&pcm.inner, cName, C.snd_pcm_stream_t(stream), C.int(mode))
-	if rc != 0 {
+	if rc < 0 {
 		return nil, NewError(int(rc))
 	}
 	// add gc flags
@@ -112,7 +171,7 @@ func (pcm *PCM) Close() error {
 		}
 		if atomic.CompareAndSwapPointer(&p, p, nil) {
 			rc := C.snd_pcm_close((*C.snd_pcm_t)(p))
-			if rc != 0 {
+			if rc < 0 {
 				panic(NewError(int(rc)))
 			}
 			// clear gc flags
@@ -137,7 +196,7 @@ func (pcm *PCM) StreamType() StreamType {
 
 func (pcm *PCM) NonBlock(enable bool) error {
 	rc := C.snd_pcm_nonblock(pcm.inner, fromBool(enable))
-	if rc != 0 {
+	if rc < 0 {
 		return NewError(int(rc))
 	}
 	return nil
@@ -145,7 +204,7 @@ func (pcm *PCM) NonBlock(enable bool) error {
 
 func (pcm *PCM) Prepare() error {
 	rc := C.snd_pcm_prepare(pcm.inner)
-	if rc != 0 {
+	if rc < 0 {
 		return NewError(int(rc))
 	}
 	return nil
@@ -153,7 +212,7 @@ func (pcm *PCM) Prepare() error {
 
 func (pcm *PCM) Reset() error {
 	rc := C.snd_pcm_reset(pcm.inner)
-	if rc != 0 {
+	if rc < 0 {
 		return NewError(int(rc))
 	}
 	return nil
@@ -161,7 +220,7 @@ func (pcm *PCM) Reset() error {
 
 func (pcm *PCM) Start() error {
 	rc := C.snd_pcm_start(pcm.inner)
-	if rc != 0 {
+	if rc < 0 {
 		return NewError(int(rc))
 	}
 	return nil
@@ -169,7 +228,7 @@ func (pcm *PCM) Start() error {
 
 func (pcm *PCM) Drop() error {
 	rc := C.snd_pcm_drop(pcm.inner)
-	if rc != 0 {
+	if rc < 0 {
 		return NewError(int(rc))
 	}
 	return nil
@@ -177,7 +236,7 @@ func (pcm *PCM) Drop() error {
 
 func (pcm *PCM) Drain() error {
 	rc := C.snd_pcm_drain(pcm.inner)
-	if rc != 0 {
+	if rc < 0 {
 		return NewError(int(rc))
 	}
 	return nil
@@ -185,7 +244,7 @@ func (pcm *PCM) Drain() error {
 
 func (pcm *PCM) Pause(enable bool) error {
 	rc := C.snd_pcm_pause(pcm.inner, fromBool(enable))
-	if rc != 0 {
+	if rc < 0 {
 		return NewError(int(rc))
 	}
 	return nil
@@ -197,7 +256,7 @@ func (pcm *PCM) State() PCMState {
 
 //func (pcm *PCM) HwSync() error {
 //	rc := C.snd_pcm_hwsync(pcm.inner)
-//	if rc != 0 {
+//	if rc < 0 {
 //		return NewError(int(rc))
 //	}
 //	return nil
@@ -206,7 +265,7 @@ func (pcm *PCM) State() PCMState {
 func (pcm *PCM) Delay() (int, error) {
 	var delay C.snd_pcm_sframes_t
 	rc := C.snd_pcm_delay(pcm.inner, &delay)
-	if rc != 0 {
+	if rc < 0 {
 		return 0, NewError(int(rc))
 	}
 	return int(delay), nil
@@ -214,7 +273,7 @@ func (pcm *PCM) Delay() (int, error) {
 
 func (pcm *PCM) Resume() error {
 	rc := C.snd_pcm_resume(pcm.inner)
-	if rc != 0 {
+	if rc < 0 {
 		return NewError(int(rc))
 	}
 	return nil
@@ -239,7 +298,7 @@ func (pcm *PCM) AvailUpdate() (int, error) {
 func (pcm *PCM) AvailDelay() (int, int, error) {
 	var availp, delayp C.snd_pcm_sframes_t
 	rc := C.snd_pcm_avail_delay(pcm.inner, &availp, &delayp)
-	if rc != 0 {
+	if rc < 0 {
 		return 0, 0, NewError(int(rc))
 	}
 	return int(availp), int(delayp), nil
@@ -331,7 +390,7 @@ func (pcm *PCM) Readn(data [][]byte, frames int) (int, error) {
 
 func (pcm *PCM) Link(other *PCM) error {
 	rc := C.snd_pcm_link(pcm.inner, other.inner)
-	if rc != 0 {
+	if rc < 0 {
 		return NewError(int(rc))
 	}
 	return nil
@@ -339,7 +398,7 @@ func (pcm *PCM) Link(other *PCM) error {
 
 func (pcm *PCM) Unlink() error {
 	rc := C.snd_pcm_unlink(pcm.inner)
-	if rc != 0 {
+	if rc < 0 {
 		return NewError(int(rc))
 	}
 	return nil
@@ -381,7 +440,7 @@ func (pcm *PCM) PollDescriptorsREvents(fds []PollFd) (int16, error) {
 	}
 	var revents C.ushort
 	rc := C.snd_pcm_poll_descriptors_revents(pcm.inner, (*C.struct_pollfd)(unsafe.Pointer(&fds[0])), C.uint(len(fds)), &revents)
-	if rc != 0 {
+	if rc < 0 {
 		return 0, NewError(int(rc))
 	}
 	return int16(revents), nil
@@ -389,13 +448,20 @@ func (pcm *PCM) PollDescriptorsREvents(fds []PollFd) (int16, error) {
 
 type PCMHwParams struct {
 	inner *C.snd_pcm_hw_params_t
+	pcm   *PCM
 }
 
-func NewPCMHwParams() *PCMHwParams {
+func PCMHwParamsAnyOf(pcm *PCM) (*PCMHwParams, error) {
 	params := &PCMHwParams{}
 	C._snd_pcm_hw_params_alloca(&params.inner)
 	runtime.SetFinalizer(params, (*PCMHwParams).Close)
-	return params
+
+	if err := params.anyOf(pcm); err != nil {
+		return nil, err
+	}
+	params.pcm = pcm
+
+	return params, nil
 }
 
 func (params *PCMHwParams) Close() error {
@@ -413,9 +479,9 @@ func (params *PCMHwParams) Close() error {
 	return nil
 }
 
-func (params *PCMHwParams) AnyOf(pcm *PCM) error {
+func (params *PCMHwParams) anyOf(pcm *PCM) error {
 	rc := C.snd_pcm_hw_params_any(pcm.inner, params.inner)
-	if rc != 0 {
+	if rc < 0 {
 		return NewError(int(rc))
 	}
 	return nil
@@ -480,7 +546,7 @@ func (params *PCMHwParams) SupportsAudioTimestampType(tsType int) bool {
 func (params *PCMHwParams) GetRateNumDen() (int, int, error) {
 	var rateNum, rateDen C.uint
 	rc := C.snd_pcm_hw_params_get_rate_numden(params.inner, &rateNum, &rateDen)
-	if rc != 0 {
+	if rc < 0 {
 		return 0, 0, NewError(int(rc))
 	}
 	return int(rateNum), int(rateDen), nil
@@ -500,4 +566,54 @@ func (params *PCMHwParams) GetFifoSize() (int, error) {
 		return 0, NewError(int(rc))
 	}
 	return int(rc), nil
+}
+
+func (params *PCMHwParams) GetAccess() (PCMAccess, error) {
+	var acs C.snd_pcm_access_t
+	rc := C.snd_pcm_hw_params_get_access(params.inner, &acs)
+	if rc < 0 {
+		return -1, NewError(int(rc))
+	}
+	return PCMAccess(acs), nil
+}
+
+func (params *PCMHwParams) TestAccess(acs PCMAccess) error {
+	rc := C.snd_pcm_hw_params_test_access(params.pcm.inner, params.inner, C.snd_pcm_access_t(acs))
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
+func (params *PCMHwParams) SetAccess(acs PCMAccess) error {
+	rc := C.snd_pcm_hw_params_set_access(params.pcm.inner, params.inner, C.snd_pcm_access_t(acs))
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
+func (params *PCMHwParams) GetFormat() (PCMFormat, error) {
+	var format C.snd_pcm_format_t
+	rc := C.snd_pcm_hw_params_get_format(params.inner, &format)
+	if rc < 0 {
+		return -1, NewError(int(rc))
+	}
+	return PCMFormat(format), nil
+}
+
+func (params *PCMHwParams) TestFormat(format PCMFormat) error {
+	rc := C.snd_pcm_hw_params_test_format(params.pcm.inner, params.inner, C.snd_pcm_format_t(format))
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
+func (params *PCMHwParams) SetFormat(format PCMFormat) error {
+	rc := C.snd_pcm_hw_params_set_format(params.pcm.inner, params.inner, C.snd_pcm_format_t(format))
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
 }

@@ -1,6 +1,5 @@
 package alsa
 
-// #cgo LDFLAGS: -lasound
 //
 // #include <alsa/asoundlib.h>
 //
