@@ -15,6 +15,8 @@ const (
 	EBADFD   = int(C.EBADFD)
 	EPIPE    = int(C.EPIPE)
 	ESTRPIPE = int(C.ESTRPIPE)
+	ENOMEM   = int(C.ENOMEM)
+	ENODEV   = int(C.ENODEV)
 )
 
 type Error struct {
