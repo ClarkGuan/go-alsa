@@ -6,8 +6,11 @@ package alsa
 // #include <alsa/asoundlib.h>
 //
 // static char *no_const(const char *s) { return (char *)s; }
+//
+// static void _snd_pcm_hw_params_alloca(snd_pcm_hw_params_t **ptr) { snd_pcm_hw_params_alloca(ptr); }
 import "C"
 import (
+	"runtime"
 	"sync/atomic"
 	"time"
 	"unsafe"
@@ -96,6 +99,8 @@ func OpenPCM(name string, stream StreamType, mode int) (*PCM, error) {
 	if rc != 0 {
 		return nil, NewError(int(rc))
 	}
+	// add gc flags
+	runtime.SetFinalizer(pcm, (*PCM).Close)
 	return pcm, nil
 }
 
@@ -108,8 +113,10 @@ func (pcm *PCM) Close() error {
 		if atomic.CompareAndSwapPointer(&p, p, nil) {
 			rc := C.snd_pcm_close((*C.snd_pcm_t)(p))
 			if rc != 0 {
-				return NewError(int(rc))
+				panic(NewError(int(rc)))
 			}
+			// clear gc flags
+			runtime.SetFinalizer(pcm, nil)
 		}
 	}
 
@@ -381,5 +388,116 @@ func (pcm *PCM) PollDescriptorsREvents(fds []PollFd) (int16, error) {
 }
 
 type PCMHwParams struct {
-	inner C.snd_pcm_hw_params_t
+	inner *C.snd_pcm_hw_params_t
+}
+
+func NewPCMHwParams() *PCMHwParams {
+	params := &PCMHwParams{}
+	C._snd_pcm_hw_params_alloca(&params.inner)
+	runtime.SetFinalizer(params, (*PCMHwParams).Close)
+	return params
+}
+
+func (params *PCMHwParams) Close() error {
+	for {
+		p := unsafe.Pointer(params.inner)
+		if p == nil {
+			break
+		}
+		if atomic.CompareAndSwapPointer(&p, p, nil) {
+			C.snd_pcm_hw_params_free((*C.snd_pcm_hw_params_t)(p))
+			runtime.SetFinalizer(params, nil)
+		}
+	}
+
+	return nil
+}
+
+func (params *PCMHwParams) AnyOf(pcm *PCM) error {
+	rc := C.snd_pcm_hw_params_any(pcm.inner, params.inner)
+	if rc != 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
+func (params *PCMHwParams) CanMmapSampleResolution() bool {
+	return C.snd_pcm_hw_params_can_mmap_sample_resolution(params.inner) != 0
+}
+
+func (params *PCMHwParams) IsDouble() bool {
+	return C.snd_pcm_hw_params_is_double(params.inner) != 0
+}
+
+func (params *PCMHwParams) IsBatch() bool {
+	return C.snd_pcm_hw_params_is_batch(params.inner) != 0
+}
+
+func (params *PCMHwParams) IsBlockTransfer() bool {
+	return C.snd_pcm_hw_params_is_block_transfer(params.inner) != 0
+}
+
+func (params *PCMHwParams) IsMonotonic() bool {
+	return C.snd_pcm_hw_params_is_monotonic(params.inner) != 0
+}
+
+func (params *PCMHwParams) CanOverrange() bool {
+	return C.snd_pcm_hw_params_can_overrange(params.inner) != 0
+}
+
+func (params *PCMHwParams) CanPause() bool {
+	return C.snd_pcm_hw_params_can_pause(params.inner) != 0
+}
+
+func (params *PCMHwParams) CanResume() bool {
+	return C.snd_pcm_hw_params_can_resume(params.inner) != 0
+}
+
+func (params *PCMHwParams) IsHalfDuplex() bool {
+	return C.snd_pcm_hw_params_is_half_duplex(params.inner) != 0
+}
+
+func (params *PCMHwParams) IsJointDuplex() bool {
+	return C.snd_pcm_hw_params_is_joint_duplex(params.inner) != 0
+}
+
+func (params *PCMHwParams) CanSyncStart() bool {
+	return C.snd_pcm_hw_params_can_sync_start(params.inner) != 0
+}
+
+func (params *PCMHwParams) CanDisablePeriodWakeup() bool {
+	return C.snd_pcm_hw_params_can_disable_period_wakeup(params.inner) != 0
+}
+
+func (params *PCMHwParams) SupportsAudioWallClockTimestamps() bool {
+	return C.snd_pcm_hw_params_supports_audio_wallclock_ts(params.inner) != 0
+}
+
+func (params *PCMHwParams) SupportsAudioTimestampType(tsType int) bool {
+	return C.snd_pcm_hw_params_supports_audio_ts_type(params.inner, C.int(tsType)) != 0
+}
+
+func (params *PCMHwParams) GetRateNumDen() (int, int, error) {
+	var rateNum, rateDen C.uint
+	rc := C.snd_pcm_hw_params_get_rate_numden(params.inner, &rateNum, &rateDen)
+	if rc != 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(rateNum), int(rateDen), nil
+}
+
+func (params *PCMHwParams) GetSBits() (int, error) {
+	rc := C.snd_pcm_hw_params_get_sbits(params.inner)
+	if rc < 0 {
+		return 0, NewError(int(rc))
+	}
+	return int(rc), nil
+}
+
+func (params *PCMHwParams) GetFifoSize() (int, error) {
+	rc := C.snd_pcm_hw_params_get_fifo_size(params.inner)
+	if rc < 0 {
+		return 0, NewError(int(rc))
+	}
+	return int(rc), nil
 }
