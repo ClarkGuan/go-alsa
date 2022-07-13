@@ -2,12 +2,14 @@ package alsa
 
 // #cgo LDFLAGS: -lasound
 //
+// #include <poll.h>
 // #include <alsa/asoundlib.h>
 //
 // static char *no_const(const char *s) { return (char *)s; }
 import "C"
 import (
 	"sync/atomic"
+	"time"
 	"unsafe"
 )
 
@@ -63,6 +65,23 @@ const (
 	SndPcmStatePaused       = PCMState(C.SND_PCM_STATE_PAUSED)
 	SndPcmStateSuspended    = PCMState(C.SND_PCM_STATE_SUSPENDED)
 	SndPcmStateDisconnected = PCMState(C.SND_PCM_STATE_DISCONNECTED)
+)
+
+type PollFd struct {
+	Fd      int32
+	Events  int16
+	REvents int16
+}
+
+const (
+	PollIn   = int16(C.POLLIN)
+	PollOut  = int16(C.POLLOUT)
+	PollErr  = int16(C.POLLERR)
+	PollPri  = int16(C.POLLPRI)
+	PollHup  = int16(C.POLLHUP)
+	PollNval = int16(C.POLLNVAL)
+	//PollMsg   = int16(C.POLLMSG)
+	//PollRdHup = int16(C.POLLRDHUP)
 )
 
 type PCM struct {
@@ -225,6 +244,140 @@ func (pcm *PCM) Rewindable() (int, error) {
 		return 0, NewError(int(rc))
 	}
 	return int(rc), nil
+}
+
+func (pcm *PCM) Rewind(frames int) (int, error) {
+	rc := C.snd_pcm_rewind(pcm.inner, C.snd_pcm_uframes_t(frames))
+	if rc < 0 {
+		return 0, NewError(int(rc))
+	}
+	return int(rc), nil
+}
+
+func (pcm *PCM) Forwardable() (int, error) {
+	rc := C.snd_pcm_forwardable(pcm.inner)
+	if rc < 0 {
+		return 0, NewError(int(rc))
+	}
+	return int(rc), nil
+}
+
+func (pcm *PCM) Forward(frames int) (int, error) {
+	rc := C.snd_pcm_forward(pcm.inner, C.snd_pcm_uframes_t(frames))
+	if rc < 0 {
+		return 0, NewError(int(rc))
+	}
+	return int(rc), nil
+}
+
+func (pcm *PCM) Writei(data []byte, frames int) (int, error) {
+	if len(data) <= 0 {
+		return 0, nil
+	}
+	rc := C.snd_pcm_writei(pcm.inner, unsafe.Pointer(&data[0]), C.snd_pcm_uframes_t(frames))
+	if rc < 0 {
+		return 0, NewError(int(rc))
+	}
+	return int(rc), nil
+}
+
+func (pcm *PCM) Readi(data []byte, frames int) (int, error) {
+	if len(data) <= 0 {
+		return 0, nil
+	}
+	rc := C.snd_pcm_readi(pcm.inner, unsafe.Pointer(&data[0]), C.snd_pcm_uframes_t(frames))
+	if rc < 0 {
+		return 0, NewError(int(rc))
+	}
+	return int(rc), nil
+}
+
+func (pcm *PCM) Writen(data [][]byte, frames int) (int, error) {
+	if len(data) <= 0 {
+		return 0, nil
+	}
+	ps := make([]unsafe.Pointer, len(data))
+	for i, s := range data {
+		ps[i] = unsafe.Pointer(&s[0])
+	}
+	rc := C.snd_pcm_writen(pcm.inner, &ps[0], C.snd_pcm_uframes_t(frames))
+	if rc < 0 {
+		return 0, NewError(int(rc))
+	}
+	return int(rc), nil
+}
+
+func (pcm *PCM) Readn(data [][]byte, frames int) (int, error) {
+	if len(data) <= 0 {
+		return 0, nil
+	}
+	ps := make([]unsafe.Pointer, len(data))
+	for i, s := range data {
+		ps[i] = unsafe.Pointer(&s[0])
+	}
+	rc := C.snd_pcm_readn(pcm.inner, &ps[0], C.snd_pcm_uframes_t(frames))
+	if rc < 0 {
+		return 0, NewError(int(rc))
+	}
+	return int(rc), nil
+}
+
+func (pcm *PCM) Link(other *PCM) error {
+	rc := C.snd_pcm_link(pcm.inner, other.inner)
+	if rc != 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
+func (pcm *PCM) Unlink() error {
+	rc := C.snd_pcm_unlink(pcm.inner)
+	if rc != 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
+func (pcm *PCM) HTimestamp() (int, *time.Time, error) {
+	var avail C.snd_pcm_uframes_t
+	var tstamp C.snd_htimestamp_t
+	rc := C.snd_pcm_htimestamp(pcm.inner, &avail, &tstamp)
+	if rc < 0 {
+		return 0, nil, NewError(int(rc))
+	}
+	tm := time.Unix(int64(tstamp.tv_sec), int64(tstamp.tv_nsec))
+	return int(avail), &tm, nil
+}
+
+func (pcm *PCM) Wait(timeout int) (int, error) {
+	rc := C.snd_pcm_wait(pcm.inner, C.int(timeout))
+	if rc < 0 {
+		return 0, NewError(int(rc))
+	}
+	return int(rc), nil
+}
+
+func (pcm *PCM) PollDescriptorsCount() int {
+	return int(C.snd_pcm_poll_descriptors_count(pcm.inner))
+}
+
+func (pcm *PCM) PollDescriptors(fds []PollFd) int {
+	if len(fds) <= 0 {
+		return 0
+	}
+	return int(C.snd_pcm_poll_descriptors(pcm.inner, (*C.struct_pollfd)(unsafe.Pointer(&fds[0])), C.uint(len(fds))))
+}
+
+func (pcm *PCM) PollDescriptorsREvents(fds []PollFd) (int16, error) {
+	if len(fds) <= 0 {
+		return 0, nil
+	}
+	var revents C.ushort
+	rc := C.snd_pcm_poll_descriptors_revents(pcm.inner, (*C.struct_pollfd)(unsafe.Pointer(&fds[0])), C.uint(len(fds)), &revents)
+	if rc != 0 {
+		return 0, NewError(int(rc))
+	}
+	return int16(revents), nil
 }
 
 type PCMHwParams struct {

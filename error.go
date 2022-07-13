@@ -11,8 +11,11 @@ import "C"
 import "fmt"
 
 const (
-	EAGAIN = int(C.EAGAIN)
-	ENOSYS = int(C.ENOSYS)
+	EAGAIN   = int(C.EAGAIN)
+	ENOSYS   = int(C.ENOSYS)
+	EBADFD   = int(C.EBADFD)
+	EPIPE    = int(C.EPIPE)
+	ESTRPIPE = int(C.ESTRPIPE)
 )
 
 type Error struct {
