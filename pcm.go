@@ -1110,6 +1110,114 @@ func (params *PCMHwParams) GetPeriodWakeup() (bool, error) {
 	return enable != 0, nil
 }
 
+func (params *PCMHwParams) GetPeriodTime() (int, int, error) {
+	var val C.uint
+	var dir C.int
+	rc := C.snd_pcm_hw_params_get_period_time(params.inner, &val, &dir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(val), int(dir), nil
+}
+
+func (params *PCMHwParams) GetPeriodTimeMin() (int, int, error) {
+	var val C.uint
+	var dir C.int
+	rc := C.snd_pcm_hw_params_get_period_time_min(params.inner, &val, &dir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(val), int(dir), nil
+}
+
+func (params *PCMHwParams) GetPeriodTimeMax() (int, int, error) {
+	var val C.uint
+	var dir C.int
+	rc := C.snd_pcm_hw_params_get_period_time_max(params.inner, &val, &dir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(val), int(dir), nil
+}
+
+func (params *PCMHwParams) TestPeriodTime(val, dir int) error {
+	rc := C.snd_pcm_hw_params_test_period_time(params.pcm.inner, params.inner, C.uint(val), C.int(dir))
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
+func (params *PCMHwParams) SetPeriodTime(val, dir int) error {
+	rc := C.snd_pcm_hw_params_set_period_time(params.pcm.inner, params.inner, C.uint(val), C.int(dir))
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
+func (params *PCMHwParams) SetPeriodTimeMin(val, dir int) (int, int, error) {
+	var cVal = C.uint(val)
+	var cDir = C.int(dir)
+	rc := C.snd_pcm_hw_params_set_period_time_min(params.pcm.inner, params.inner, &cVal, &cDir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(cVal), int(cDir), nil
+}
+
+func (params *PCMHwParams) SetPeriodTimeMax(val, dir int) (int, int, error) {
+	var cVal = C.uint(val)
+	var cDir = C.int(dir)
+	rc := C.snd_pcm_hw_params_set_period_time_max(params.pcm.inner, params.inner, &cVal, &cDir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(cVal), int(cDir), nil
+}
+
+func (params *PCMHwParams) SetPeriodTimeMinMax(min, minDir, max, maxDir int) (int, int, int, int, error) {
+	var cMin = C.uint(min)
+	var cMinDir = C.int(minDir)
+	var cMax = C.uint(max)
+	var cMaxDir = C.int(maxDir)
+	rc := C.snd_pcm_hw_params_set_period_time_minmax(params.pcm.inner, params.inner, &cMin, &cMinDir, &cMax, &cMaxDir)
+	if rc < 0 {
+		return 0, 0, 0, 0, NewError(int(rc))
+	}
+	return int(cMin), int(cMinDir), int(cMax), int(cMaxDir), nil
+}
+
+func (params *PCMHwParams) SetPeriodTimeNear(val, dir int) (int, int, error) {
+	var cVal = C.uint(val)
+	var cDir = C.int(dir)
+	rc := C.snd_pcm_hw_params_set_period_time_near(params.pcm.inner, params.inner, &cVal, &cDir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(cVal), int(cDir), nil
+}
+
+func (params *PCMHwParams) SetPeriodTimeFirst() (int, int, error) {
+	var val C.uint
+	var dir C.int
+	rc := C.snd_pcm_hw_params_set_period_time_first(params.pcm.inner, params.inner, &val, &dir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(val), int(dir), nil
+}
+
+func (params *PCMHwParams) SetPeriodTimeLast() (int, int, error) {
+	var val C.uint
+	var dir C.int
+	rc := C.snd_pcm_hw_params_set_period_time_last(params.pcm.inner, params.inner, &val, &dir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(val), int(dir), nil
+}
+
 func (params *PCMHwParams) Install() error {
 	return params.pcm.InstallHwParams(params)
 }
