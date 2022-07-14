@@ -6,7 +6,6 @@ package pcm
 // #include <alsa/asoundlib.h>
 //
 // static char *no_const(const char *s) { return (char *)s; }
-// static void _snd_pcm_info_alloca(snd_pcm_info_t **ptr) { snd_pcm_info_alloca(ptr); }
 //
 import "C"
 import (
@@ -76,17 +75,6 @@ func (pcm *PCM) NonBlock(enable bool) error {
 // TODO Async API
 // snd_async_add_pcm_handler
 // snd_async_handler_get_pcm
-
-func (pcm *PCM) Info() (*Info, error) {
-	info := new(Info)
-	C._snd_pcm_info_alloca(&info.inner)
-	rc := C.snd_pcm_info(pcm.inner, info.inner)
-	if rc < 0 {
-		return nil, alsa.NewError(int(rc))
-	}
-	runtime.SetFinalizer(info, (*Info).Close)
-	return info, nil
-}
 
 func (pcm *PCM) Prepare() error {
 	rc := C.snd_pcm_prepare(pcm.inner)
