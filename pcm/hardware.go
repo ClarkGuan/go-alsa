@@ -20,30 +20,26 @@ type HardwareParams struct {
 }
 
 func AnyHardwareParamsFrom(pcm *PCM) (*HardwareParams, error) {
-	params := &HardwareParams{}
+	params := new(HardwareParams)
 	C._snd_pcm_hw_params_alloca(&params.inner)
-	runtime.SetFinalizer(params, (*HardwareParams).Close)
-
 	rc := C.snd_pcm_hw_params_any(pcm.inner, params.inner)
 	if rc < 0 {
 		return nil, alsa.NewError(int(rc))
 	}
 	params.pcm = pcm
-
+	runtime.SetFinalizer(params, (*HardwareParams).Close)
 	return params, nil
 }
 
 func CurrentHardwareParamsFrom(pcm *PCM) (*HardwareParams, error) {
-	params := &HardwareParams{}
+	params := new(HardwareParams)
 	C._snd_pcm_hw_params_alloca(&params.inner)
-	runtime.SetFinalizer(params, (*HardwareParams).Close)
-
 	rc := C.snd_pcm_hw_params_current(pcm.inner, params.inner)
 	if rc < 0 {
 		return nil, alsa.NewError(int(rc))
 	}
 	params.pcm = pcm
-
+	runtime.SetFinalizer(params, (*HardwareParams).Close)
 	return params, nil
 }
 
