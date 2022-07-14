@@ -3,7 +3,12 @@ package pcm
 //
 // #include <alsa/asoundlib.h>
 //
-// static void _snd_pcm_hw_params_alloca(snd_pcm_hw_params_t **ptr) { snd_pcm_hw_params_alloca(ptr); }
+// static int _snd_pcm_hw_params_alloca(snd_pcm_hw_params_t **ptr) {
+//     int rc = snd_pcm_hw_params_malloc(ptr);
+//     if (rc < 0) return rc;
+//     memset(*ptr, 0, snd_pcm_hw_params_sizeof());
+//     return 0;
+// }
 //
 import "C"
 import (
@@ -21,8 +26,11 @@ type HardwareParams struct {
 
 func AnyHardwareParamsFrom(pcm *PCM) (*HardwareParams, error) {
 	params := new(HardwareParams)
-	C._snd_pcm_hw_params_alloca(&params.inner)
-	rc := C.snd_pcm_hw_params_any(pcm.inner, params.inner)
+	rc := C._snd_pcm_hw_params_alloca(&params.inner)
+	if rc < 0 {
+		return nil, alsa.NewError(int(rc))
+	}
+	rc = C.snd_pcm_hw_params_any(pcm.inner, params.inner)
 	if rc < 0 {
 		return nil, alsa.NewError(int(rc))
 	}
@@ -33,8 +41,11 @@ func AnyHardwareParamsFrom(pcm *PCM) (*HardwareParams, error) {
 
 func CurrentHardwareParamsFrom(pcm *PCM) (*HardwareParams, error) {
 	params := new(HardwareParams)
-	C._snd_pcm_hw_params_alloca(&params.inner)
-	rc := C.snd_pcm_hw_params_current(pcm.inner, params.inner)
+	rc := C._snd_pcm_hw_params_alloca(&params.inner)
+	if rc < 0 {
+		return nil, alsa.NewError(int(rc))
+	}
+	rc = C.snd_pcm_hw_params_current(pcm.inner, params.inner)
 	if rc < 0 {
 		return nil, alsa.NewError(int(rc))
 	}

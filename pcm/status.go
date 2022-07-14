@@ -2,7 +2,12 @@ package pcm
 
 // #include <alsa/asoundlib.h>
 //
-// static void _snd_pcm_status_alloca(snd_pcm_status_t **ptr) { snd_pcm_status_alloca(ptr); }
+// static int _snd_pcm_status_alloca(snd_pcm_status_t **ptr) {
+//     int rc = snd_pcm_status_malloc(ptr);
+//     if (rc < 0) return rc;
+//     memset(*ptr, 0, snd_pcm_status_sizeof());
+//     return 0;
+// }
 //
 // typedef struct {
 //     unsigned int valid;

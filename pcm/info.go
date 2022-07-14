@@ -4,7 +4,12 @@ package pcm
 // #include <alsa/asoundlib.h>
 //
 // static char *no_const(const char *s) { return (char *)s; }
-// static void _snd_pcm_info_alloca(snd_pcm_info_t **ptr) { snd_pcm_info_alloca(ptr); }
+// static int _snd_pcm_info_alloca(snd_pcm_info_t **ptr) {
+//     int rc = snd_pcm_info_malloc(ptr);
+//     if (rc < 0) return rc;
+//     memset(*ptr, 0, snd_pcm_info_sizeof());
+//     return 0;
+// }
 //
 import "C"
 import (

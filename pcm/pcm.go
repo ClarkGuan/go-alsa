@@ -22,7 +22,7 @@ type PCM struct {
 }
 
 func Open(name string, stream StreamType, mode int) (*PCM, error) {
-	pcm := &PCM{}
+	pcm := new(PCM)
 	cName := C.CString(name)
 	defer C.free(unsafe.Pointer(cName))
 	rc := C.snd_pcm_open(&pcm.inner, cName, C.snd_pcm_stream_t(stream), C.int(mode))

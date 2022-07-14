@@ -3,7 +3,12 @@ package pcm
 //
 // #include <alsa/asoundlib.h>
 //
-// static void _snd_pcm_sw_params_alloca(snd_pcm_sw_params_t **ptr) { snd_pcm_sw_params_alloca(ptr); }
+// static int _snd_pcm_sw_params_alloca(snd_pcm_sw_params_t **ptr) {
+//     int rc = snd_pcm_sw_params_malloc(ptr);
+//     if (rc < 0) return rc;
+//     memset(*ptr, 0, snd_pcm_sw_params_sizeof());
+//     return 0;
+// }
 //
 import "C"
 import (
