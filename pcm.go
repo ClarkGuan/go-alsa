@@ -1568,6 +1568,113 @@ func (params *PCMHwParams) SetBufferTimeLast() (int, int, error) {
 	return int(val), int(dir), nil
 }
 
+func (params *PCMHwParams) GetBufferSize() (int, error) {
+	var val C.snd_pcm_uframes_t
+	rc := C.snd_pcm_hw_params_get_buffer_size(params.inner, &val)
+	if rc < 0 {
+		return 0, NewError(int(rc))
+	}
+	return int(val), nil
+}
+
+func (params *PCMHwParams) GetBufferSizeMin() (int, error) {
+	var val C.snd_pcm_uframes_t
+	rc := C.snd_pcm_hw_params_get_buffer_size_min(params.inner, &val)
+	if rc < 0 {
+		return 0, NewError(int(rc))
+	}
+	return int(val), nil
+}
+
+func (params *PCMHwParams) GetBufferSizeMax() (int, error) {
+	var val C.snd_pcm_uframes_t
+	rc := C.snd_pcm_hw_params_get_buffer_size_max(params.inner, &val)
+	if rc < 0 {
+		return 0, NewError(int(rc))
+	}
+	return int(val), nil
+}
+
+func (params *PCMHwParams) TestBufferSize(val int) error {
+	rc := C.snd_pcm_hw_params_test_buffer_size(params.pcm.inner, params.inner, C.snd_pcm_uframes_t(val))
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
+func (params *PCMHwParams) SetBufferSize(val int) error {
+	rc := C.snd_pcm_hw_params_set_buffer_size(params.pcm.inner, params.inner, C.snd_pcm_uframes_t(val))
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
+func (params *PCMHwParams) SetBufferSizeMin(val int) (int, error) {
+	var cVal = C.snd_pcm_uframes_t(val)
+	rc := C.snd_pcm_hw_params_set_buffer_size_min(params.pcm.inner, params.inner, &cVal)
+	if rc < 0 {
+		return 0, NewError(int(rc))
+	}
+	return int(cVal), nil
+}
+
+func (params *PCMHwParams) SetBufferSizeMax(val int) (int, error) {
+	var cVal = C.snd_pcm_uframes_t(val)
+	rc := C.snd_pcm_hw_params_set_buffer_size_max(params.pcm.inner, params.inner, &cVal)
+	if rc < 0 {
+		return 0, NewError(int(rc))
+	}
+	return int(cVal), nil
+}
+
+func (params *PCMHwParams) SetBufferSizeMinMax(min, max int) (int, int, error) {
+	var cMin = C.snd_pcm_uframes_t(min)
+	var cMax = C.snd_pcm_uframes_t(max)
+	rc := C.snd_pcm_hw_params_set_buffer_size_minmax(params.pcm.inner, params.inner, &cMin, &cMax)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(cMin), int(cMax), nil
+}
+
+func (params *PCMHwParams) SetBufferSizeNear(val int) (int, error) {
+	var cVal = C.snd_pcm_uframes_t(val)
+	rc := C.snd_pcm_hw_params_set_buffer_size_near(params.pcm.inner, params.inner, &cVal)
+	if rc < 0 {
+		return 0, NewError(int(rc))
+	}
+	return int(cVal), nil
+}
+
+func (params *PCMHwParams) SetBufferSizeFirst() (int, error) {
+	var val C.snd_pcm_uframes_t
+	rc := C.snd_pcm_hw_params_set_buffer_size_first(params.pcm.inner, params.inner, &val)
+	if rc < 0 {
+		return 0, NewError(int(rc))
+	}
+	return int(val), nil
+}
+
+func (params *PCMHwParams) SetBufferSizeLast() (int, error) {
+	var val C.snd_pcm_uframes_t
+	rc := C.snd_pcm_hw_params_set_buffer_size_last(params.pcm.inner, params.inner, &val)
+	if rc < 0 {
+		return 0, NewError(int(rc))
+	}
+	return int(val), nil
+}
+
+func (params *PCMHwParams) GetMinAlign() (int, error) {
+	var val C.snd_pcm_uframes_t
+	rc := C.snd_pcm_hw_params_get_min_align(params.inner, &val)
+	if rc < 0 {
+		return 0, NewError(int(rc))
+	}
+	return int(val), nil
+}
+
 func (params *PCMHwParams) Install() error {
 	return params.pcm.InstallHwParams(params)
 }
