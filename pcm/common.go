@@ -1,4 +1,4 @@
-package alsa
+package pcm
 
 import "C"
 
