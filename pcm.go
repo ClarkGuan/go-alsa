@@ -513,52 +513,44 @@ func (pcm *PCM) Forward(frames int) (int, error) {
 	return int(rc), nil
 }
 
-func (pcm *PCM) Writei(data []byte, frames int) (int, error) {
-	if len(data) <= 0 {
+func (pcm *PCM) Writei(data unsafe.Pointer, frames int) (int, error) {
+	if data == nil {
 		return 0, nil
 	}
-	rc := C.snd_pcm_writei(pcm.inner, unsafe.Pointer(&data[0]), C.snd_pcm_uframes_t(frames))
+	rc := C.snd_pcm_writei(pcm.inner, data, C.snd_pcm_uframes_t(frames))
 	if rc < 0 {
 		return 0, NewError(int(rc))
 	}
 	return int(rc), nil
 }
 
-func (pcm *PCM) Readi(data []byte, frames int) (int, error) {
-	if len(data) <= 0 {
+func (pcm *PCM) Readi(data unsafe.Pointer, frames int) (int, error) {
+	if data == nil {
 		return 0, nil
 	}
-	rc := C.snd_pcm_readi(pcm.inner, unsafe.Pointer(&data[0]), C.snd_pcm_uframes_t(frames))
+	rc := C.snd_pcm_readi(pcm.inner, data, C.snd_pcm_uframes_t(frames))
 	if rc < 0 {
 		return 0, NewError(int(rc))
 	}
 	return int(rc), nil
 }
 
-func (pcm *PCM) Writen(data [][]byte, frames int) (int, error) {
+func (pcm *PCM) Writen(data []unsafe.Pointer, frames int) (int, error) {
 	if len(data) <= 0 {
 		return 0, nil
 	}
-	ps := make([]unsafe.Pointer, len(data))
-	for i, s := range data {
-		ps[i] = unsafe.Pointer(&s[0])
-	}
-	rc := C.snd_pcm_writen(pcm.inner, &ps[0], C.snd_pcm_uframes_t(frames))
+	rc := C.snd_pcm_writen(pcm.inner, &data[0], C.snd_pcm_uframes_t(frames))
 	if rc < 0 {
 		return 0, NewError(int(rc))
 	}
 	return int(rc), nil
 }
 
-func (pcm *PCM) Readn(data [][]byte, frames int) (int, error) {
+func (pcm *PCM) Readn(data []unsafe.Pointer, frames int) (int, error) {
 	if len(data) <= 0 {
 		return 0, nil
 	}
-	ps := make([]unsafe.Pointer, len(data))
-	for i, s := range data {
-		ps[i] = unsafe.Pointer(&s[0])
-	}
-	rc := C.snd_pcm_readn(pcm.inner, &ps[0], C.snd_pcm_uframes_t(frames))
+	rc := C.snd_pcm_readn(pcm.inner, &data[0], C.snd_pcm_uframes_t(frames))
 	if rc < 0 {
 		return 0, NewError(int(rc))
 	}
