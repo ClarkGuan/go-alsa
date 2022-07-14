@@ -55,6 +55,107 @@ func (access PCMAccess) String() string {
 
 type PCMFormat int
 
+func BuildLinearFormat(width, physicalWidth int, unsigned, bigEndian bool) PCMFormat {
+	return PCMFormat(C.snd_pcm_build_linear_format(C.int(width), C.int(physicalWidth),
+		fromBool(unsigned), fromBool(bigEndian)))
+}
+
+func (format PCMFormat) Signed() (bool, error) {
+	rc := C.snd_pcm_format_signed(C.snd_pcm_format_t(format))
+	if rc < 0 {
+		return false, NewError(int(rc))
+	}
+	return rc != 0, nil
+}
+
+func (format PCMFormat) Unsigned() (bool, error) {
+	rc := C.snd_pcm_format_unsigned(C.snd_pcm_format_t(format))
+	if rc < 0 {
+		return false, NewError(int(rc))
+	}
+	return rc != 0, nil
+}
+
+func (format PCMFormat) Linear() bool {
+	return C.snd_pcm_format_linear(C.snd_pcm_format_t(format)) != 0
+}
+
+func (format PCMFormat) Float() bool {
+	return C.snd_pcm_format_float(C.snd_pcm_format_t(format)) != 0
+}
+
+func (format PCMFormat) LittleEndian() (bool, error) {
+	rc := C.snd_pcm_format_little_endian(C.snd_pcm_format_t(format))
+	if rc < 0 {
+		return false, NewError(int(rc))
+	}
+	return rc != 0, nil
+}
+
+func (format PCMFormat) BigEndian() (bool, error) {
+	rc := C.snd_pcm_format_big_endian(C.snd_pcm_format_t(format))
+	if rc < 0 {
+		return false, NewError(int(rc))
+	}
+	return rc != 0, nil
+}
+
+func (format PCMFormat) CPUEndian() (bool, error) {
+	rc := C.snd_pcm_format_cpu_endian(C.snd_pcm_format_t(format))
+	if rc < 0 {
+		return false, NewError(int(rc))
+	}
+	return rc != 0, nil
+}
+
+func (format PCMFormat) Width() (int, error) {
+	rc := C.snd_pcm_format_width(C.snd_pcm_format_t(format))
+	if rc < 0 {
+		return 0, NewError(int(rc))
+	}
+	return int(rc), nil
+}
+
+func (format PCMFormat) PhysicalWidth() (int, error) {
+	rc := C.snd_pcm_format_physical_width(C.snd_pcm_format_t(format))
+	if rc < 0 {
+		return 0, NewError(int(rc))
+	}
+	return int(rc), nil
+}
+
+func (format PCMFormat) Size(samples int) (int, error) {
+	rc := C.snd_pcm_format_size(C.snd_pcm_format_t(format), C.size_t(samples))
+	if rc < 0 {
+		return 0, NewError(int(rc))
+	}
+	return int(rc), nil
+}
+
+func (format PCMFormat) Silence() byte {
+	return byte(C.snd_pcm_format_silence(C.snd_pcm_format_t(format)))
+}
+
+func (format PCMFormat) Silence16() uint16 {
+	return uint16(C.snd_pcm_format_silence_16(C.snd_pcm_format_t(format)))
+}
+
+func (format PCMFormat) Silence32() uint32 {
+	return uint32(C.snd_pcm_format_silence_32(C.snd_pcm_format_t(format)))
+}
+
+func (format PCMFormat) Silence64() uint64 {
+	return uint64(C.snd_pcm_format_silence_64(C.snd_pcm_format_t(format)))
+}
+
+func (format PCMFormat) SetSilenceData(data unsafe.Pointer, samples int) error {
+	rc := C.snd_pcm_format_set_silence(C.snd_pcm_format_t(format), data, C.uint(samples))
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
 func (format PCMFormat) Name() string {
 	return C.GoString(C.no_const(C.snd_pcm_format_name(C.snd_pcm_format_t(format))))
 }
@@ -131,6 +232,7 @@ const (
 	SndPcmAccessRwInterleaved      = PCMAccess(C.SND_PCM_ACCESS_RW_INTERLEAVED)
 	SndPcmAccessRwNoninterleaved   = PCMAccess(C.SND_PCM_ACCESS_RW_NONINTERLEAVED)
 
+	SndPcmFormatUnknown          = PCMFormat(C.SND_PCM_FORMAT_UNKNOWN)
 	SndPcmFormatS8               = PCMFormat(C.SND_PCM_FORMAT_S8)
 	SndPcmFormatU8               = PCMFormat(C.SND_PCM_FORMAT_U8)
 	SndPcmFormatS16Le            = PCMFormat(C.SND_PCM_FORMAT_S16_LE)
@@ -535,6 +637,22 @@ func (pcm *PCM) UninstallHwParams() error {
 		return NewError(int(rc))
 	}
 	return nil
+}
+
+func (pcm *PCM) BytesToFrames(byteCount int) int {
+	return int(C.snd_pcm_bytes_to_frames(pcm.inner, C.ssize_t(byteCount)))
+}
+
+func (pcm *PCM) FramesToBytes(frames int) int {
+	return int(C.snd_pcm_frames_to_bytes(pcm.inner, C.snd_pcm_sframes_t(frames)))
+}
+
+func (pcm *PCM) BytesToSamples(byteCount int) int {
+	return int(C.snd_pcm_bytes_to_samples(pcm.inner, C.ssize_t(byteCount)))
+}
+
+func (pcm *PCM) SamplesToBytes(samples int) int {
+	return int(C.snd_pcm_samples_to_bytes(pcm.inner, C.long(samples)))
 }
 
 type PCMHwParams struct {
