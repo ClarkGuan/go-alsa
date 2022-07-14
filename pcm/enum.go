@@ -8,8 +8,9 @@ package pcm
 //
 import "C"
 import (
-	"github.com/ClarkGuan/go-alsa"
 	"unsafe"
+
+	"github.com/ClarkGuan/go-alsa"
 )
 
 type StreamType int
@@ -36,6 +37,10 @@ type State int
 
 func (state State) Name() string {
 	return C.GoString(C.no_const(C.snd_pcm_state_name(C.snd_pcm_state_t(state))))
+}
+
+func (state State) String() string {
+	return state.Name()
 }
 
 type Access int
@@ -172,6 +177,15 @@ func FromFormatName(name string) Format {
 type Class int
 type SubClass int
 type TimestampMode int
+
+func (mode TimestampMode) Name() string {
+	return C.GoString(C.no_const(C.snd_pcm_tstamp_mode_name(C.snd_pcm_tstamp_t(mode))))
+}
+
+func (mode TimestampMode) String() string {
+	return mode.Name()
+}
+
 type TimestampType int
 
 const (
