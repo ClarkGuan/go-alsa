@@ -282,7 +282,7 @@ func (pcm *PCM) Unlink() error {
 	return nil
 }
 
-func (pcm *PCM) HTimestamp() (int, *time.Time, error) {
+func (pcm *PCM) HighTimestamp() (int, *time.Time, error) {
 	var avail C.snd_pcm_uframes_t
 	var tstamp C.snd_htimestamp_t
 	rc := C.snd_pcm_htimestamp(pcm.inner, &avail, &tstamp)
