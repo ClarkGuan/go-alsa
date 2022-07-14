@@ -14,6 +14,7 @@ import "C"
 import (
 	"runtime"
 	"sync/atomic"
+	"time"
 	"unsafe"
 
 	"github.com/ClarkGuan/go-alsa"
@@ -494,112 +495,113 @@ func (params *HardwareParams) GetPeriodWakeup() (bool, error) {
 	return enable != 0, nil
 }
 
-func (params *HardwareParams) GetPeriodTime() (int, int, error) {
+func (params *HardwareParams) GetPeriodTime() (time.Duration, int, error) {
 	var val C.uint
 	var dir C.int
 	rc := C.snd_pcm_hw_params_get_period_time(params.inner, &val, &dir)
 	if rc < 0 {
 		return 0, 0, alsa.NewError(int(rc))
 	}
-	return int(val), int(dir), nil
+	return time.Duration(val) * time.Microsecond, int(dir), nil
 }
 
-func (params *HardwareParams) GetPeriodTimeMin() (int, int, error) {
+func (params *HardwareParams) GetPeriodTimeMin() (time.Duration, int, error) {
 	var val C.uint
 	var dir C.int
 	rc := C.snd_pcm_hw_params_get_period_time_min(params.inner, &val, &dir)
 	if rc < 0 {
 		return 0, 0, alsa.NewError(int(rc))
 	}
-	return int(val), int(dir), nil
+	return time.Duration(val) * time.Microsecond, int(dir), nil
 }
 
-func (params *HardwareParams) GetPeriodTimeMax() (int, int, error) {
+func (params *HardwareParams) GetPeriodTimeMax() (time.Duration, int, error) {
 	var val C.uint
 	var dir C.int
 	rc := C.snd_pcm_hw_params_get_period_time_max(params.inner, &val, &dir)
 	if rc < 0 {
 		return 0, 0, alsa.NewError(int(rc))
 	}
-	return int(val), int(dir), nil
+	return time.Duration(val) * time.Microsecond, int(dir), nil
 }
 
-func (params *HardwareParams) TestPeriodTime(val, dir int) error {
-	rc := C.snd_pcm_hw_params_test_period_time(params.pcm.inner, params.inner, C.uint(val), C.int(dir))
+func (params *HardwareParams) TestPeriodTime(val time.Duration, dir int) error {
+	rc := C.snd_pcm_hw_params_test_period_time(params.pcm.inner, params.inner, C.uint(val.Microseconds()), C.int(dir))
 	if rc < 0 {
 		return alsa.NewError(int(rc))
 	}
 	return nil
 }
 
-func (params *HardwareParams) SetPeriodTime(val, dir int) error {
-	rc := C.snd_pcm_hw_params_set_period_time(params.pcm.inner, params.inner, C.uint(val), C.int(dir))
+func (params *HardwareParams) SetPeriodTime(val time.Duration, dir int) error {
+	rc := C.snd_pcm_hw_params_set_period_time(params.pcm.inner, params.inner, C.uint(val.Microseconds()), C.int(dir))
 	if rc < 0 {
 		return alsa.NewError(int(rc))
 	}
 	return nil
 }
 
-func (params *HardwareParams) SetPeriodTimeMin(val, dir int) (int, int, error) {
-	var cVal = C.uint(val)
+func (params *HardwareParams) SetPeriodTimeMin(val time.Duration, dir int) (time.Duration, int, error) {
+	var cVal = C.uint(val.Microseconds())
 	var cDir = C.int(dir)
 	rc := C.snd_pcm_hw_params_set_period_time_min(params.pcm.inner, params.inner, &cVal, &cDir)
 	if rc < 0 {
 		return 0, 0, alsa.NewError(int(rc))
 	}
-	return int(cVal), int(cDir), nil
+	return time.Duration(cVal) * time.Microsecond, int(cDir), nil
 }
 
-func (params *HardwareParams) SetPeriodTimeMax(val, dir int) (int, int, error) {
-	var cVal = C.uint(val)
+func (params *HardwareParams) SetPeriodTimeMax(val time.Duration, dir int) (time.Duration, int, error) {
+	var cVal = C.uint(val.Microseconds())
 	var cDir = C.int(dir)
 	rc := C.snd_pcm_hw_params_set_period_time_max(params.pcm.inner, params.inner, &cVal, &cDir)
 	if rc < 0 {
 		return 0, 0, alsa.NewError(int(rc))
 	}
-	return int(cVal), int(cDir), nil
+	return time.Duration(cVal) * time.Microsecond, int(cDir), nil
 }
 
-func (params *HardwareParams) SetPeriodTimeMinMax(min, minDir, max, maxDir int) (int, int, int, int, error) {
-	var cMin = C.uint(min)
+func (params *HardwareParams) SetPeriodTimeMinMax(
+	min time.Duration, minDir int, max time.Duration, maxDir int) (time.Duration, int, time.Duration, int, error) {
+	var cMin = C.uint(min.Microseconds())
 	var cMinDir = C.int(minDir)
-	var cMax = C.uint(max)
+	var cMax = C.uint(max.Microseconds())
 	var cMaxDir = C.int(maxDir)
 	rc := C.snd_pcm_hw_params_set_period_time_minmax(params.pcm.inner, params.inner, &cMin, &cMinDir, &cMax, &cMaxDir)
 	if rc < 0 {
 		return 0, 0, 0, 0, alsa.NewError(int(rc))
 	}
-	return int(cMin), int(cMinDir), int(cMax), int(cMaxDir), nil
+	return time.Duration(cMin) * time.Microsecond, int(cMinDir), time.Duration(cMax) * time.Microsecond, int(cMaxDir), nil
 }
 
-func (params *HardwareParams) SetPeriodTimeNear(val, dir int) (int, int, error) {
-	var cVal = C.uint(val)
+func (params *HardwareParams) SetPeriodTimeNear(val time.Duration, dir int) (time.Duration, int, error) {
+	var cVal = C.uint(val.Microseconds())
 	var cDir = C.int(dir)
 	rc := C.snd_pcm_hw_params_set_period_time_near(params.pcm.inner, params.inner, &cVal, &cDir)
 	if rc < 0 {
 		return 0, 0, alsa.NewError(int(rc))
 	}
-	return int(cVal), int(cDir), nil
+	return time.Duration(cVal) * time.Microsecond, int(cDir), nil
 }
 
-func (params *HardwareParams) SetPeriodTimeFirst() (int, int, error) {
+func (params *HardwareParams) SetPeriodTimeFirst() (time.Duration, int, error) {
 	var val C.uint
 	var dir C.int
 	rc := C.snd_pcm_hw_params_set_period_time_first(params.pcm.inner, params.inner, &val, &dir)
 	if rc < 0 {
 		return 0, 0, alsa.NewError(int(rc))
 	}
-	return int(val), int(dir), nil
+	return time.Duration(val) * time.Microsecond, int(dir), nil
 }
 
-func (params *HardwareParams) SetPeriodTimeLast() (int, int, error) {
+func (params *HardwareParams) SetPeriodTimeLast() (time.Duration, int, error) {
 	var val C.uint
 	var dir C.int
 	rc := C.snd_pcm_hw_params_set_period_time_last(params.pcm.inner, params.inner, &val, &dir)
 	if rc < 0 {
 		return 0, 0, alsa.NewError(int(rc))
 	}
-	return int(val), int(dir), nil
+	return time.Duration(val) * time.Microsecond, int(dir), nil
 }
 
 func (params *HardwareParams) GetPeriodSize() (int, int, error) {
@@ -834,112 +836,113 @@ func (params *HardwareParams) SetPeriodsPerBufferInteger() error {
 	return nil
 }
 
-func (params *HardwareParams) GetBufferTime() (int, int, error) {
+func (params *HardwareParams) GetBufferTime() (time.Duration, int, error) {
 	var val C.uint
 	var dir C.int
 	rc := C.snd_pcm_hw_params_get_buffer_time(params.inner, &val, &dir)
 	if rc < 0 {
 		return 0, 0, alsa.NewError(int(rc))
 	}
-	return int(val), int(dir), nil
+	return time.Duration(val) * time.Microsecond, int(dir), nil
 }
 
-func (params *HardwareParams) GetBufferTimeMin() (int, int, error) {
+func (params *HardwareParams) GetBufferTimeMin() (time.Duration, int, error) {
 	var val C.uint
 	var dir C.int
 	rc := C.snd_pcm_hw_params_get_buffer_time_min(params.inner, &val, &dir)
 	if rc < 0 {
 		return 0, 0, alsa.NewError(int(rc))
 	}
-	return int(val), int(dir), nil
+	return time.Duration(val) * time.Microsecond, int(dir), nil
 }
 
-func (params *HardwareParams) GetBufferTimeMax() (int, int, error) {
+func (params *HardwareParams) GetBufferTimeMax() (time.Duration, int, error) {
 	var val C.uint
 	var dir C.int
 	rc := C.snd_pcm_hw_params_get_buffer_time_max(params.inner, &val, &dir)
 	if rc < 0 {
 		return 0, 0, alsa.NewError(int(rc))
 	}
-	return int(val), int(dir), nil
+	return time.Duration(val) * time.Microsecond, int(dir), nil
 }
 
-func (params *HardwareParams) TestBufferTime(val, dir int) error {
-	rc := C.snd_pcm_hw_params_test_buffer_time(params.pcm.inner, params.inner, C.uint(val), C.int(dir))
+func (params *HardwareParams) TestBufferTime(val time.Duration, dir int) error {
+	rc := C.snd_pcm_hw_params_test_buffer_time(params.pcm.inner, params.inner, C.uint(val.Microseconds()), C.int(dir))
 	if rc < 0 {
 		return alsa.NewError(int(rc))
 	}
 	return nil
 }
 
-func (params *HardwareParams) SetBufferTime(val, dir int) error {
-	rc := C.snd_pcm_hw_params_set_buffer_time(params.pcm.inner, params.inner, C.uint(val), C.int(dir))
+func (params *HardwareParams) SetBufferTime(val time.Duration, dir int) error {
+	rc := C.snd_pcm_hw_params_set_buffer_time(params.pcm.inner, params.inner, C.uint(val.Microseconds()), C.int(dir))
 	if rc < 0 {
 		return alsa.NewError(int(rc))
 	}
 	return nil
 }
 
-func (params *HardwareParams) SetBufferTimeMin(val, dir int) (int, int, error) {
-	var cVal = C.uint(val)
+func (params *HardwareParams) SetBufferTimeMin(val time.Duration, dir int) (time.Duration, int, error) {
+	var cVal = C.uint(val.Microseconds())
 	var cDir = C.int(dir)
 	rc := C.snd_pcm_hw_params_set_buffer_time_min(params.pcm.inner, params.inner, &cVal, &cDir)
 	if rc < 0 {
 		return 0, 0, alsa.NewError(int(rc))
 	}
-	return int(cVal), int(cDir), nil
+	return time.Duration(cVal) * time.Microsecond, int(cDir), nil
 }
 
-func (params *HardwareParams) SetBufferTimeMax(val, dir int) (int, int, error) {
-	var cVal = C.uint(val)
+func (params *HardwareParams) SetBufferTimeMax(val time.Duration, dir int) (time.Duration, int, error) {
+	var cVal = C.uint(val.Microseconds())
 	var cDir = C.int(dir)
 	rc := C.snd_pcm_hw_params_set_buffer_time_max(params.pcm.inner, params.inner, &cVal, &cDir)
 	if rc < 0 {
 		return 0, 0, alsa.NewError(int(rc))
 	}
-	return int(cVal), int(cDir), nil
+	return time.Duration(cVal) * time.Microsecond, int(cDir), nil
 }
 
-func (params *HardwareParams) SetBufferTimeMinMax(min, minDir, max, maxDir int) (int, int, int, int, error) {
-	var cMin = C.uint(min)
+func (params *HardwareParams) SetBufferTimeMinMax(
+	min time.Duration, minDir int, max time.Duration, maxDir int) (time.Duration, int, time.Duration, int, error) {
+	var cMin = C.uint(min.Microseconds())
 	var cMinDir = C.int(minDir)
-	var cMax = C.uint(max)
+	var cMax = C.uint(max.Microseconds())
 	var cMaxDir = C.int(maxDir)
 	rc := C.snd_pcm_hw_params_set_buffer_time_minmax(params.pcm.inner, params.inner, &cMin, &cMinDir, &cMax, &cMaxDir)
 	if rc < 0 {
 		return 0, 0, 0, 0, alsa.NewError(int(rc))
 	}
-	return int(cMin), int(cMinDir), int(cMax), int(cMaxDir), nil
+	return time.Duration(cMin) * time.Microsecond, int(cMinDir), time.Duration(cMax) * time.Microsecond, int(cMaxDir), nil
 }
 
-func (params *HardwareParams) SetBufferTimeNear(val, dir int) (int, int, error) {
-	var cVal = C.uint(val)
+func (params *HardwareParams) SetBufferTimeNear(val time.Duration, dir int) (time.Duration, int, error) {
+	var cVal = C.uint(val.Microseconds())
 	var cDir = C.int(dir)
 	rc := C.snd_pcm_hw_params_set_buffer_time_near(params.pcm.inner, params.inner, &cVal, &cDir)
 	if rc < 0 {
 		return 0, 0, alsa.NewError(int(rc))
 	}
-	return int(cVal), int(cDir), nil
+	return time.Duration(cVal) * time.Microsecond, int(cDir), nil
 }
 
-func (params *HardwareParams) SetBufferTimeFirst() (int, int, error) {
+func (params *HardwareParams) SetBufferTimeFirst() (time.Duration, int, error) {
 	var val C.uint
 	var dir C.int
 	rc := C.snd_pcm_hw_params_set_buffer_time_first(params.pcm.inner, params.inner, &val, &dir)
 	if rc < 0 {
 		return 0, 0, alsa.NewError(int(rc))
 	}
-	return int(val), int(dir), nil
+	return time.Duration(val) * time.Microsecond, int(dir), nil
 }
 
-func (params *HardwareParams) SetBufferTimeLast() (int, int, error) {
+func (params *HardwareParams) SetBufferTimeLast() (time.Duration, int, error) {
 	var val C.uint
 	var dir C.int
 	rc := C.snd_pcm_hw_params_set_buffer_time_last(params.pcm.inner, params.inner, &val, &dir)
 	if rc < 0 {
 		return 0, 0, alsa.NewError(int(rc))
 	}
-	return int(val), int(dir), nil
+	return time.Duration(val) * time.Microsecond, int(dir), nil
 }
 
 func (params *HardwareParams) GetBufferSize() (int, error) {
