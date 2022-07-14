@@ -1460,6 +1460,114 @@ func (params *PCMHwParams) SetPeriodsInteger() error {
 	return nil
 }
 
+func (params *PCMHwParams) GetBufferTime() (int, int, error) {
+	var val C.uint
+	var dir C.int
+	rc := C.snd_pcm_hw_params_get_buffer_time(params.inner, &val, &dir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(val), int(dir), nil
+}
+
+func (params *PCMHwParams) GetBufferTimeMin() (int, int, error) {
+	var val C.uint
+	var dir C.int
+	rc := C.snd_pcm_hw_params_get_buffer_time_min(params.inner, &val, &dir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(val), int(dir), nil
+}
+
+func (params *PCMHwParams) GetBufferTimeMax() (int, int, error) {
+	var val C.uint
+	var dir C.int
+	rc := C.snd_pcm_hw_params_get_buffer_time_max(params.inner, &val, &dir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(val), int(dir), nil
+}
+
+func (params *PCMHwParams) TestBufferTime(val, dir int) error {
+	rc := C.snd_pcm_hw_params_test_buffer_time(params.pcm.inner, params.inner, C.uint(val), C.int(dir))
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
+func (params *PCMHwParams) SetBufferTime(val, dir int) error {
+	rc := C.snd_pcm_hw_params_set_buffer_time(params.pcm.inner, params.inner, C.uint(val), C.int(dir))
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
+func (params *PCMHwParams) SetBufferTimeMin(val, dir int) (int, int, error) {
+	var cVal = C.uint(val)
+	var cDir = C.int(dir)
+	rc := C.snd_pcm_hw_params_set_buffer_time_min(params.pcm.inner, params.inner, &cVal, &cDir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(cVal), int(cDir), nil
+}
+
+func (params *PCMHwParams) SetBufferTimeMax(val, dir int) (int, int, error) {
+	var cVal = C.uint(val)
+	var cDir = C.int(dir)
+	rc := C.snd_pcm_hw_params_set_buffer_time_max(params.pcm.inner, params.inner, &cVal, &cDir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(cVal), int(cDir), nil
+}
+
+func (params *PCMHwParams) SetBufferTimeMinMax(min, minDir, max, maxDir int) (int, int, int, int, error) {
+	var cMin = C.uint(min)
+	var cMinDir = C.int(minDir)
+	var cMax = C.uint(max)
+	var cMaxDir = C.int(maxDir)
+	rc := C.snd_pcm_hw_params_set_buffer_time_minmax(params.pcm.inner, params.inner, &cMin, &cMinDir, &cMax, &cMaxDir)
+	if rc < 0 {
+		return 0, 0, 0, 0, NewError(int(rc))
+	}
+	return int(cMin), int(cMinDir), int(cMax), int(cMaxDir), nil
+}
+
+func (params *PCMHwParams) SetBufferTimeNear(val, dir int) (int, int, error) {
+	var cVal = C.uint(val)
+	var cDir = C.int(dir)
+	rc := C.snd_pcm_hw_params_set_buffer_time_near(params.pcm.inner, params.inner, &cVal, &cDir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(cVal), int(cDir), nil
+}
+
+func (params *PCMHwParams) SetBufferTimeFirst() (int, int, error) {
+	var val C.uint
+	var dir C.int
+	rc := C.snd_pcm_hw_params_set_buffer_time_first(params.pcm.inner, params.inner, &val, &dir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(val), int(dir), nil
+}
+
+func (params *PCMHwParams) SetBufferTimeLast() (int, int, error) {
+	var val C.uint
+	var dir C.int
+	rc := C.snd_pcm_hw_params_set_buffer_time_last(params.pcm.inner, params.inner, &val, &dir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(val), int(dir), nil
+}
+
 func (params *PCMHwParams) Install() error {
 	return params.pcm.InstallHwParams(params)
 }
