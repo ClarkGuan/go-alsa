@@ -924,6 +924,16 @@ func (params *PCMHwParams) SetChannelsMax(max int) (int, error) {
 	return int(channels), nil
 }
 
+func (params *PCMHwParams) SetChannelsMinMax(min, max int) (int, int, error) {
+	var cMin = C.uint(min)
+	var cMax = C.uint(max)
+	rc := C.snd_pcm_hw_params_set_channels_minmax(params.pcm.inner, params.inner, &cMin, &cMax)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(cMin), int(cMax), nil
+}
+
 func (params *PCMHwParams) SetChannelsNear(channels int) (int, error) {
 	cArg := C.uint(channels)
 	rc := C.snd_pcm_hw_params_set_channels_near(params.pcm.inner, params.inner, &cArg)
@@ -1324,6 +1334,14 @@ func (params *PCMHwParams) SetPeriodSizeLast() (int, int, error) {
 		return 0, 0, NewError(int(rc))
 	}
 	return int(val), int(dir), nil
+}
+
+func (params *PCMHwParams) SetPeriodSizeInteger() error {
+	rc := C.snd_pcm_hw_params_set_period_size_integer(params.pcm.inner, params.inner)
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
 }
 
 func (params *PCMHwParams) Install() error {
