@@ -1218,6 +1218,114 @@ func (params *PCMHwParams) SetPeriodTimeLast() (int, int, error) {
 	return int(val), int(dir), nil
 }
 
+func (params *PCMHwParams) GetPeriodSize() (int, int, error) {
+	var val C.snd_pcm_uframes_t
+	var dir C.int
+	rc := C.snd_pcm_hw_params_get_period_size(params.inner, &val, &dir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(val), int(dir), nil
+}
+
+func (params *PCMHwParams) GetPeriodSizeMin() (int, int, error) {
+	var val C.snd_pcm_uframes_t
+	var dir C.int
+	rc := C.snd_pcm_hw_params_get_period_size_min(params.inner, &val, &dir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(val), int(dir), nil
+}
+
+func (params *PCMHwParams) GetPeriodSizeMax() (int, int, error) {
+	var val C.snd_pcm_uframes_t
+	var dir C.int
+	rc := C.snd_pcm_hw_params_get_period_size_max(params.inner, &val, &dir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(val), int(dir), nil
+}
+
+func (params *PCMHwParams) TestPeriodSize(val, dir int) error {
+	rc := C.snd_pcm_hw_params_test_period_size(params.pcm.inner, params.inner, C.snd_pcm_uframes_t(val), C.int(dir))
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
+func (params *PCMHwParams) SetPeriodSize(val, dir int) error {
+	rc := C.snd_pcm_hw_params_set_period_size(params.pcm.inner, params.inner, C.snd_pcm_uframes_t(val), C.int(dir))
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
+func (params *PCMHwParams) SetPeriodSizeMin(val, dir int) (int, int, error) {
+	var cVal = C.snd_pcm_uframes_t(val)
+	var cDir = C.int(dir)
+	rc := C.snd_pcm_hw_params_set_period_size_min(params.pcm.inner, params.inner, &cVal, &cDir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(cVal), int(cDir), nil
+}
+
+func (params *PCMHwParams) SetPeriodSizeMax(val, dir int) (int, int, error) {
+	var cVal = C.snd_pcm_uframes_t(val)
+	var cDir = C.int(dir)
+	rc := C.snd_pcm_hw_params_set_period_size_max(params.pcm.inner, params.inner, &cVal, &cDir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(cVal), int(cDir), nil
+}
+
+func (params *PCMHwParams) SetPeriodSizeMinMax(min, minDir, max, maxDir int) (int, int, int, int, error) {
+	var cMin = C.snd_pcm_uframes_t(min)
+	var cMinDir = C.int(minDir)
+	var cMax = C.snd_pcm_uframes_t(max)
+	var cMaxDir = C.int(maxDir)
+	rc := C.snd_pcm_hw_params_set_period_size_minmax(params.pcm.inner, params.inner, &cMin, &cMinDir, &cMax, &cMaxDir)
+	if rc < 0 {
+		return 0, 0, 0, 0, NewError(int(rc))
+	}
+	return int(cMin), int(cMinDir), int(cMax), int(cMaxDir), nil
+}
+
+func (params *PCMHwParams) SetPeriodSizeNear(val, dir int) (int, int, error) {
+	var cVal = C.snd_pcm_uframes_t(val)
+	var cDir = C.int(dir)
+	rc := C.snd_pcm_hw_params_set_period_size_near(params.pcm.inner, params.inner, &cVal, &cDir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(cVal), int(cDir), nil
+}
+
+func (params *PCMHwParams) SetPeriodSizeFirst() (int, int, error) {
+	var val C.snd_pcm_uframes_t
+	var dir C.int
+	rc := C.snd_pcm_hw_params_set_period_size_first(params.pcm.inner, params.inner, &val, &dir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(val), int(dir), nil
+}
+
+func (params *PCMHwParams) SetPeriodSizeLast() (int, int, error) {
+	var val C.snd_pcm_uframes_t
+	var dir C.int
+	rc := C.snd_pcm_hw_params_set_period_size_last(params.pcm.inner, params.inner, &val, &dir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(val), int(dir), nil
+}
+
 func (params *PCMHwParams) Install() error {
 	return params.pcm.InstallHwParams(params)
 }
