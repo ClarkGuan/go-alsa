@@ -351,3 +351,35 @@ func (pcm *PCM) BytesToSamples(byteCount int) int {
 func (pcm *PCM) SamplesToBytes(samples int) int {
 	return int(C.snd_pcm_samples_to_bytes(pcm.inner, C.long(samples)))
 }
+
+func (pcm *PCM) Recover(errno int, printReason bool) error {
+	rc := C.snd_pcm_recover(pcm.inner, C.int(errno), fromBool(printReason))
+	if rc < 0 {
+		return alsa.NewError(int(rc))
+	}
+	return nil
+}
+
+func (pcm *PCM) SetParams(format Format, access Access, channels, rate int, resample bool, latency time.Duration) error {
+	rc := C.snd_pcm_set_params(pcm.inner,
+		C.snd_pcm_format_t(format),
+		C.snd_pcm_access_t(access),
+		C.uint(channels),
+		C.uint(rate),
+		fromBool(resample),
+		C.uint(latency.Microseconds()))
+	if rc < 0 {
+		return alsa.NewError(int(rc))
+	}
+	return nil
+}
+
+func (pcm *PCM) GetParams() (int, int, error) {
+	var bufferFrames C.snd_pcm_uframes_t
+	var periodFrames C.snd_pcm_uframes_t
+	rc := C.snd_pcm_get_params(pcm.inner, &bufferFrames, &periodFrames)
+	if rc < 0 {
+		return 0, 0, alsa.NewError(int(rc))
+	}
+	return int(bufferFrames), int(periodFrames), nil
+}
