@@ -849,7 +849,7 @@ func (params *PCMHwParams) SetFormatFirst() (PCMFormat, error) {
 	var format C.snd_pcm_format_t
 	rc := C.snd_pcm_hw_params_set_format_first(params.pcm.inner, params.inner, &format)
 	if rc < 0 {
-		return -1, NewError(int(rc))
+		return SndPcmFormatUnknown, NewError(int(rc))
 	}
 	return PCMFormat(format), nil
 }
@@ -858,7 +858,7 @@ func (params *PCMHwParams) SetFormatLast() (PCMFormat, error) {
 	var format C.snd_pcm_format_t
 	rc := C.snd_pcm_hw_params_set_format_last(params.pcm.inner, params.inner, &format)
 	if rc < 0 {
-		return -1, NewError(int(rc))
+		return SndPcmFormatUnknown, NewError(int(rc))
 	}
 	return PCMFormat(format), nil
 }
@@ -906,8 +906,8 @@ func (params *PCMHwParams) SetChannels(channels int) error {
 	return nil
 }
 
-func (params *PCMHwParams) SetChannelsMin() (int, error) {
-	var channels C.uint
+func (params *PCMHwParams) SetChannelsMin(min int) (int, error) {
+	var channels = C.uint(min)
 	rc := C.snd_pcm_hw_params_set_channels_min(params.pcm.inner, params.inner, &channels)
 	if rc < 0 {
 		return -1, NewError(int(rc))
@@ -915,8 +915,8 @@ func (params *PCMHwParams) SetChannelsMin() (int, error) {
 	return int(channels), nil
 }
 
-func (params *PCMHwParams) SetChannelsMax() (int, error) {
-	var channels C.uint
+func (params *PCMHwParams) SetChannelsMax(max int) (int, error) {
+	var channels = C.uint(max)
 	rc := C.snd_pcm_hw_params_set_channels_max(params.pcm.inner, params.inner, &channels)
 	if rc < 0 {
 		return -1, NewError(int(rc))
@@ -951,53 +951,34 @@ func (params *PCMHwParams) SetChannelsLast() (int, error) {
 	return int(channels), nil
 }
 
-func Dir(i int) *int {
-	return &i
+func (params *PCMHwParams) GetRate() (int, int, error) {
+	var rate C.uint
+	var dir C.int
+	rc := C.snd_pcm_hw_params_get_rate(params.inner, &rate, &dir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(rate), int(dir), nil
 }
 
-func (params *PCMHwParams) GetRate(dir *int) (int, error) {
+func (params *PCMHwParams) GetRateMin() (int, int, error) {
 	var rate C.uint
-	var rc C.int
-	if dir == nil {
-		rc = C.snd_pcm_hw_params_get_rate(params.inner, &rate, nil)
-	} else {
-		i := C.int(*dir)
-		rc = C.snd_pcm_hw_params_get_rate(params.inner, &rate, &i)
-	}
+	var dir C.int
+	rc := C.snd_pcm_hw_params_get_rate_min(params.inner, &rate, &dir)
 	if rc < 0 {
-		return -1, NewError(int(rc))
+		return 0, 0, NewError(int(rc))
 	}
-	return int(rate), nil
+	return int(rate), int(dir), nil
 }
 
-func (params *PCMHwParams) GetRateMin(dir *int) (int, error) {
+func (params *PCMHwParams) GetRateMax() (int, int, error) {
 	var rate C.uint
-	var rc C.int
-	if dir == nil {
-		rc = C.snd_pcm_hw_params_get_rate_min(params.inner, &rate, nil)
-	} else {
-		i := C.int(*dir)
-		rc = C.snd_pcm_hw_params_get_rate_min(params.inner, &rate, &i)
-	}
+	var dir C.int
+	rc := C.snd_pcm_hw_params_get_rate_max(params.inner, &rate, &dir)
 	if rc < 0 {
-		return -1, NewError(int(rc))
+		return 0, 0, NewError(int(rc))
 	}
-	return int(rate), nil
-}
-
-func (params *PCMHwParams) GetRateMax(dir *int) (int, error) {
-	var rate C.uint
-	var rc C.int
-	if dir == nil {
-		rc = C.snd_pcm_hw_params_get_rate_max(params.inner, &rate, nil)
-	} else {
-		i := C.int(*dir)
-		rc = C.snd_pcm_hw_params_get_rate_max(params.inner, &rate, &i)
-	}
-	if rc < 0 {
-		return -1, NewError(int(rc))
-	}
-	return int(rate), nil
+	return int(rate), int(dir), nil
 }
 
 func (params *PCMHwParams) TestRate(rate, dir int) error {
@@ -1014,6 +995,119 @@ func (params *PCMHwParams) SetRate(rate, dir int) error {
 		return NewError(int(rc))
 	}
 	return nil
+}
+
+func (params *PCMHwParams) SetRateMin(rate, dir int) (int, int, error) {
+	var cRate = C.uint(rate)
+	var cDir = C.int(dir)
+	rc := C.snd_pcm_hw_params_set_rate_min(params.pcm.inner, params.inner, &cRate, &cDir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(cRate), int(cDir), nil
+}
+
+func (params *PCMHwParams) SetRateMax(rate, dir int) (int, int, error) {
+	var cRate = C.uint(rate)
+	var cDir = C.int(dir)
+	rc := C.snd_pcm_hw_params_set_rate_max(params.pcm.inner, params.inner, &cRate, &cDir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(cRate), int(cDir), nil
+}
+
+func (params *PCMHwParams) SetRateMinMax(min, minDir, max, maxDir int) (int, int, int, int, error) {
+	var cMin = C.uint(min)
+	var cMinDir = C.int(minDir)
+	var cMax = C.uint(max)
+	var cMaxDir = C.int(maxDir)
+	rc := C.snd_pcm_hw_params_set_rate_minmax(params.pcm.inner, params.inner, &cMin, &cMinDir, &cMax, &cMaxDir)
+	if rc < 0 {
+		return 0, 0, 0, 0, NewError(int(rc))
+	}
+	return int(cMin), int(cMinDir), int(cMax), int(cMaxDir), nil
+}
+
+func (params *PCMHwParams) SetRateNear(rate, dir int) (int, int, error) {
+	var cRate = C.uint(rate)
+	var cDir = C.int(dir)
+	rc := C.snd_pcm_hw_params_set_rate_near(params.pcm.inner, params.inner, &cRate, &cDir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(cRate), int(cDir), nil
+}
+
+func (params *PCMHwParams) SetRateFirst() (int, int, error) {
+	var rate C.uint
+	var dir C.int
+	rc := C.snd_pcm_hw_params_set_rate_first(params.pcm.inner, params.inner, &rate, &dir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(rate), int(dir), nil
+}
+
+func (params *PCMHwParams) SetRateLast() (int, int, error) {
+	var rate C.uint
+	var dir C.int
+	rc := C.snd_pcm_hw_params_set_rate_last(params.pcm.inner, params.inner, &rate, &dir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(rate), int(dir), nil
+}
+
+func (params *PCMHwParams) SetRateResample(enable bool) error {
+	rc := C.snd_pcm_hw_params_set_rate_resample(params.pcm.inner, params.inner, C.uint(fromBool(enable)))
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
+func (params *PCMHwParams) GetRateResample() (bool, error) {
+	var enable C.uint
+	rc := C.snd_pcm_hw_params_get_rate_resample(params.pcm.inner, params.inner, &enable)
+	if rc < 0 {
+		return false, NewError(int(rc))
+	}
+	return enable != 0, nil
+}
+
+func (params *PCMHwParams) SetExportBuffer(enable bool) error {
+	rc := C.snd_pcm_hw_params_set_export_buffer(params.pcm.inner, params.inner, C.uint(fromBool(enable)))
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
+func (params *PCMHwParams) GetExportBuffer() (bool, error) {
+	var enable C.uint
+	rc := C.snd_pcm_hw_params_get_export_buffer(params.pcm.inner, params.inner, &enable)
+	if rc < 0 {
+		return false, NewError(int(rc))
+	}
+	return enable != 0, nil
+}
+
+func (params *PCMHwParams) SetPeriodWakeup(enable bool) error {
+	rc := C.snd_pcm_hw_params_set_period_wakeup(params.pcm.inner, params.inner, C.uint(fromBool(enable)))
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
+func (params *PCMHwParams) GetPeriodWakeup() (bool, error) {
+	var enable C.uint
+	rc := C.snd_pcm_hw_params_get_period_wakeup(params.pcm.inner, params.inner, &enable)
+	if rc < 0 {
+		return false, NewError(int(rc))
+	}
+	return enable != 0, nil
 }
 
 func (params *PCMHwParams) Install() error {

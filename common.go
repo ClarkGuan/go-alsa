@@ -9,3 +9,7 @@ func fromBool(b bool) C.int {
 		return 0
 	}
 }
+
+func Dir(i int) *int {
+	return &i
+}
