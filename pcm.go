@@ -1344,6 +1344,122 @@ func (params *PCMHwParams) SetPeriodSizeInteger() error {
 	return nil
 }
 
+func (params *PCMHwParams) GetPeriods() (int, int, error) {
+	var val C.uint
+	var dir C.int
+	rc := C.snd_pcm_hw_params_get_periods(params.inner, &val, &dir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(val), int(dir), nil
+}
+
+func (params *PCMHwParams) GetPeriodsMin() (int, int, error) {
+	var val C.uint
+	var dir C.int
+	rc := C.snd_pcm_hw_params_get_periods_min(params.inner, &val, &dir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(val), int(dir), nil
+}
+
+func (params *PCMHwParams) GetPeriodsMax() (int, int, error) {
+	var val C.uint
+	var dir C.int
+	rc := C.snd_pcm_hw_params_get_periods_max(params.inner, &val, &dir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(val), int(dir), nil
+}
+
+func (params *PCMHwParams) TestPeriods(val, dir int) error {
+	rc := C.snd_pcm_hw_params_test_periods(params.pcm.inner, params.inner, C.uint(val), C.int(dir))
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
+func (params *PCMHwParams) SetPeriods(val, dir int) error {
+	rc := C.snd_pcm_hw_params_set_periods(params.pcm.inner, params.inner, C.uint(val), C.int(dir))
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
+func (params *PCMHwParams) SetPeriodsMin(val, dir int) (int, int, error) {
+	var cVal = C.uint(val)
+	var cDir = C.int(dir)
+	rc := C.snd_pcm_hw_params_set_periods_min(params.pcm.inner, params.inner, &cVal, &cDir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(cVal), int(cDir), nil
+}
+
+func (params *PCMHwParams) SetPeriodsMax(val, dir int) (int, int, error) {
+	var cVal = C.uint(val)
+	var cDir = C.int(dir)
+	rc := C.snd_pcm_hw_params_set_periods_max(params.pcm.inner, params.inner, &cVal, &cDir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(cVal), int(cDir), nil
+}
+
+func (params *PCMHwParams) SetPeriodsMinMax(min, minDir, max, maxDir int) (int, int, int, int, error) {
+	var cMin = C.uint(min)
+	var cMinDir = C.int(minDir)
+	var cMax = C.uint(max)
+	var cMaxDir = C.int(maxDir)
+	rc := C.snd_pcm_hw_params_set_periods_minmax(params.pcm.inner, params.inner, &cMin, &cMinDir, &cMax, &cMaxDir)
+	if rc < 0 {
+		return 0, 0, 0, 0, NewError(int(rc))
+	}
+	return int(cMin), int(cMinDir), int(cMax), int(cMaxDir), nil
+}
+
+func (params *PCMHwParams) SetPeriodsNear(val, dir int) (int, int, error) {
+	var cVal = C.uint(val)
+	var cDir = C.int(dir)
+	rc := C.snd_pcm_hw_params_set_periods_near(params.pcm.inner, params.inner, &cVal, &cDir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(cVal), int(cDir), nil
+}
+
+func (params *PCMHwParams) SetPeriodsFirst() (int, int, error) {
+	var cVal C.uint
+	var cDir C.int
+	rc := C.snd_pcm_hw_params_set_periods_first(params.pcm.inner, params.inner, &cVal, &cDir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(cVal), int(cDir), nil
+}
+
+func (params *PCMHwParams) SetPeriodsLast() (int, int, error) {
+	var cVal C.uint
+	var cDir C.int
+	rc := C.snd_pcm_hw_params_set_periods_last(params.pcm.inner, params.inner, &cVal, &cDir)
+	if rc < 0 {
+		return 0, 0, NewError(int(rc))
+	}
+	return int(cVal), int(cDir), nil
+}
+
+func (params *PCMHwParams) SetPeriodsInteger() error {
+	rc := C.snd_pcm_hw_params_set_periods_integer(params.pcm.inner, params.inner)
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
 func (params *PCMHwParams) Install() error {
 	return params.pcm.InstallHwParams(params)
 }
