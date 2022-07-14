@@ -9,6 +9,9 @@ package alsa
 // static void _snd_pcm_hw_params_alloca(snd_pcm_hw_params_t **ptr) { snd_pcm_hw_params_alloca(ptr); }
 //
 // static void _snd_pcm_info_alloca(snd_pcm_info_t **ptr) { snd_pcm_info_alloca(ptr); }
+//
+// static void _snd_pcm_sw_params_alloca(snd_pcm_sw_params_t **ptr) { snd_pcm_sw_params_alloca(ptr); }
+//
 import "C"
 import (
 	"runtime"
@@ -176,6 +179,8 @@ func PCMFormatName(name string) PCMFormat {
 
 type PCMClass int
 type PCMSubClass int
+type PCMTimestampMode int
+type PCMTimestampType int
 
 const (
 	SndPcmStreamPlayback = StreamType(C.SND_PCM_STREAM_PLAYBACK)
@@ -292,6 +297,14 @@ const (
 
 	SndPcmSubclassGenericMix = PCMSubClass(C.SND_PCM_SUBCLASS_GENERIC_MIX)
 	SndPcmSubclassMultiMix   = PCMSubClass(C.SND_PCM_SUBCLASS_MULTI_MIX)
+
+	SndPcmTstampNone   = PCMTimestampMode(C.SND_PCM_TSTAMP_NONE)
+	SndPcmTstampEnable = PCMTimestampMode(C.SND_PCM_TSTAMP_ENABLE)
+	SndPcmTstampMmap   = PCMTimestampMode(C.SND_PCM_TSTAMP_MMAP)
+
+	SndPcmTstampTypeGettimeofday = PCMTimestampType(C.SND_PCM_TSTAMP_TYPE_GETTIMEOFDAY)
+	SndPcmTstampTypeMonotonic    = PCMTimestampType(C.SND_PCM_TSTAMP_TYPE_MONOTONIC)
+	SndPcmTstampTypeMonotonicRaw = PCMTimestampType(C.SND_PCM_TSTAMP_TYPE_MONOTONIC_RAW)
 )
 
 type PollFd struct {
@@ -323,7 +336,6 @@ func OpenPCM(name string, stream StreamType, mode int) (*PCM, error) {
 	if rc < 0 {
 		return nil, NewError(int(rc))
 	}
-	// add gc flags
 	runtime.SetFinalizer(pcm, (*PCM).Close)
 	return pcm, nil
 }
@@ -331,16 +343,15 @@ func OpenPCM(name string, stream StreamType, mode int) (*PCM, error) {
 func (pcm *PCM) Close() error {
 	for {
 		p := unsafe.Pointer(pcm.inner)
-		c := pcm.inner
 		if p == nil {
 			break
 		}
+		c := pcm.inner
 		if atomic.CompareAndSwapPointer(&p, p, nil) {
 			rc := C.snd_pcm_close(c)
 			if rc < 0 {
 				panic(NewError(int(rc)))
 			}
-			// clear gc flags
 			runtime.SetFinalizer(pcm, nil)
 		}
 	}
@@ -367,6 +378,10 @@ func (pcm *PCM) NonBlock(enable bool) error {
 	}
 	return nil
 }
+
+// TODO Async API
+// snd_async_add_pcm_handler
+// snd_async_handler_get_pcm
 
 func (pcm *PCM) Info() (*PCMInfo, error) {
 	info := new(PCMInfo)
@@ -631,6 +646,14 @@ func (pcm *PCM) UninstallHwParams() error {
 	return nil
 }
 
+func (pcm *PCM) InstallSwParams(params *PCMSwParams) error {
+	rc := C.snd_pcm_sw_params(pcm.inner, params.inner)
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
 func (pcm *PCM) BytesToFrames(byteCount int) int {
 	return int(C.snd_pcm_bytes_to_frames(pcm.inner, C.ssize_t(byteCount)))
 }
@@ -683,10 +706,10 @@ func PCMHwParamsCurrent(pcm *PCM) (*PCMHwParams, error) {
 func (params *PCMHwParams) Close() error {
 	for {
 		p := unsafe.Pointer(params.inner)
-		i := params.inner
 		if p == nil {
 			break
 		}
+		i := params.inner
 		if atomic.CompareAndSwapPointer(&p, p, nil) {
 			C.snd_pcm_hw_params_free(i)
 			runtime.SetFinalizer(params, nil)
@@ -1683,6 +1706,82 @@ func (params *PCMHwParams) Uninstall() error {
 	return params.pcm.UninstallHwParams()
 }
 
+type PCMSwParams struct {
+	inner *C.snd_pcm_sw_params_t
+	pcm   *PCM
+}
+
+func PCMSwParamsCurrent(pcm *PCM) (*PCMSwParams, error) {
+	params := new(PCMSwParams)
+	C._snd_pcm_sw_params_alloca(&params.inner)
+	rc := C.snd_pcm_sw_params_current(pcm.inner, params.inner)
+	if rc < 0 {
+		return nil, NewError(int(rc))
+	}
+	params.pcm = pcm
+	runtime.SetFinalizer(params, (*PCMSwParams).Close)
+	return params, nil
+}
+
+func (params *PCMSwParams) Close() error {
+	for {
+		p := unsafe.Pointer(params.inner)
+		if p == nil {
+			break
+		}
+		tmp := params.inner
+		if atomic.CompareAndSwapPointer(&p, p, nil) {
+			C.snd_pcm_sw_params_free(tmp)
+			runtime.SetFinalizer(params, nil)
+			params.pcm = nil
+		}
+	}
+	return nil
+}
+
+func (params *PCMSwParams) GetBoundary() (int, error) {
+	var val C.snd_pcm_uframes_t
+	rc := C.snd_pcm_sw_params_get_boundary(params.inner, &val)
+	if rc < 0 {
+		return 0, NewError(int(rc))
+	}
+	return int(val), nil
+}
+
+func (params *PCMSwParams) SetTimestampMode(mode PCMTimestampMode) error {
+	rc := C.snd_pcm_sw_params_set_tstamp_mode(params.pcm.inner, params.inner, C.snd_pcm_tstamp_t(mode))
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
+func (params *PCMSwParams) GetTimestampMode() (PCMTimestampMode, error) {
+	var val C.snd_pcm_tstamp_t
+	rc := C.snd_pcm_sw_params_get_tstamp_mode(params.inner, &val)
+	if rc < 0 {
+		return -1, NewError(int(rc))
+	}
+	return PCMTimestampMode(val), nil
+}
+
+func (params *PCMSwParams) SetTimestampType(t PCMTimestampType) error {
+	rc := C.snd_pcm_sw_params_set_tstamp_type(params.pcm.inner, params.inner, C.snd_pcm_tstamp_type_t(t))
+	if rc < 0 {
+		return NewError(int(rc))
+	}
+	return nil
+}
+
+func (params *PCMSwParams) GetTimestampType() (PCMTimestampType, error) {
+	var val C.snd_pcm_tstamp_type_t
+	rc := C.snd_pcm_sw_params_get_tstamp_type(params.inner, &val)
+	if rc < 0 {
+		return -1, NewError(int(rc))
+	}
+	return PCMTimestampType(val), nil
+}
+
 type PCMInfo struct {
 	inner *C.snd_pcm_info_t
 }
@@ -1690,10 +1789,10 @@ type PCMInfo struct {
 func (info *PCMInfo) Close() error {
 	for {
 		p := unsafe.Pointer(info.inner)
-		i := info.inner
 		if p == nil {
 			break
 		}
+		i := info.inner
 		if atomic.CompareAndSwapPointer(&p, p, nil) {
 			C.snd_pcm_info_free(i)
 			runtime.SetFinalizer(info, nil)

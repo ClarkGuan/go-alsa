@@ -51,10 +51,10 @@ func attach(file *C.FILE) (*Output, error) {
 func (o *Output) Close() error {
 	for {
 		c := unsafe.Pointer(o.inner)
-		i := o.inner
 		if c == nil {
 			break
 		}
+		i := o.inner
 		if atomic.CompareAndSwapPointer(&c, c, nil) {
 			rc := C.snd_output_close(i)
 			if rc < 0 {
@@ -135,10 +135,10 @@ func (b *Buffer) Buf() []byte {
 func (b *Buffer) Close() error {
 	for {
 		c := unsafe.Pointer(b.inner)
-		i := b.inner
 		if c == nil {
 			break
 		}
+		i := b.inner
 		if atomic.CompareAndSwapPointer(&c, c, nil) {
 			rc := C.snd_output_close(i)
 			if rc < 0 {
