@@ -10,12 +10,16 @@ import (
 	"unsafe"
 )
 
-type Output struct {
+type Output interface {
+	Ptr() unsafe.Pointer
+}
+
+type File struct {
 	inner *C.snd_output_t
 }
 
-func OpenOutput(name, mode string) (*Output, error) {
-	output := &Output{}
+func OpenOutput(name, mode string) (*File, error) {
+	output := &File{}
 	cName := C.CString(name)
 	cMode := C.CString(mode)
 	defer func() {
@@ -26,50 +30,53 @@ func OpenOutput(name, mode string) (*Output, error) {
 	if rc < 0 {
 		return nil, NewError(int(rc))
 	}
-	runtime.SetFinalizer(output, (*Output).Close)
+	runtime.SetFinalizer(output, (*File).Close)
 	return output, nil
 }
 
-func AttachStdout() (*Output, error) {
+func AttachStdout() (*File, error) {
 	return attach(C.stdout)
 }
 
-func AttachStderr() (*Output, error) {
+func AttachStderr() (*File, error) {
 	return attach(C.stderr)
 }
 
-func attach(file *C.FILE) (*Output, error) {
-	output := &Output{}
+func attach(file *C.FILE) (*File, error) {
+	output := &File{}
 	rc := C.snd_output_stdio_attach(&output.inner, file, C.int(0))
 	if rc < 0 {
 		return nil, NewError(int(rc))
 	}
-	runtime.SetFinalizer(output, (*Output).Close)
+	runtime.SetFinalizer(output, (*File).Close)
 	return output, nil
 }
 
-func (o *Output) Close() error {
+func (f *File) Close() error {
 	for {
-		c := unsafe.Pointer(o.inner)
+		c := unsafe.Pointer(f.inner)
 		if c == nil {
 			break
 		}
-		i := o.inner
+		i := f.inner
 		if atomic.CompareAndSwapPointer(&c, c, nil) {
 			rc := C.snd_output_close(i)
 			if rc < 0 {
 				panic(NewError(int(rc)))
 			}
-			runtime.SetFinalizer(o, nil)
+			runtime.SetFinalizer(f, nil)
 		}
 	}
 
 	return nil
 }
 
+func (f *File) Ptr() unsafe.Pointer {
+	return unsafe.Pointer(f.inner)
+}
+
 type Buffer struct {
 	inner *C.snd_output_t
-	//innerBuf *bytes.Buffer
 }
 
 func OpenBuffer() (*Buffer, error) {
@@ -150,4 +157,8 @@ func (b *Buffer) Close() error {
 	}
 
 	return nil
+}
+
+func (b *Buffer) Ptr() unsafe.Pointer {
+	return unsafe.Pointer(b.inner)
 }
