@@ -352,12 +352,16 @@ func (pcm *PCM) SamplesToBytes(samples int) int {
 	return int(C.snd_pcm_samples_to_bytes(pcm.inner, C.long(samples)))
 }
 
-func (pcm *PCM) Recover(errno int, printReason bool) error {
-	rc := C.snd_pcm_recover(pcm.inner, C.int(errno), fromBool(printReason))
-	if rc < 0 {
-		return alsa.NewError(int(rc))
+func (pcm *PCM) Recover(err error, silent bool) error {
+	if alsaErr, b := err.(*alsa.Error); b {
+		rc := C.snd_pcm_recover(pcm.inner, C.int(alsaErr.Errno), fromBool(silent))
+		if rc < 0 {
+			return alsa.NewError(int(rc))
+		}
+		return nil
+	} else {
+		return err
 	}
-	return nil
 }
 
 func (pcm *PCM) SetParams(format Format, access Access, channels, rate int, resample bool, latency time.Duration) error {
