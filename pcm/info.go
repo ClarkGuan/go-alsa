@@ -4,7 +4,7 @@ package pcm
 // #include <alsa/asoundlib.h>
 //
 // static char *no_const(const char *s) { return (char *)s; }
-// static int _snd_pcm_info_alloca(snd_pcm_info_t **ptr) {
+// static int _snd_pcm_info_calloc(snd_pcm_info_t **ptr) {
 //     int rc = snd_pcm_info_malloc(ptr);
 //     if (rc < 0) return rc;
 //     memset(*ptr, 0, snd_pcm_info_sizeof());
@@ -22,7 +22,7 @@ import (
 
 func (pcm *Dev) Info() (*Info, error) {
 	info := new(Info)
-	C._snd_pcm_info_alloca(&info.inner)
+	C._snd_pcm_info_calloc(&info.inner)
 	rc := C.snd_pcm_info(pcm.inner, info.inner)
 	if rc < 0 {
 		return nil, alsa.NewError(int(rc))

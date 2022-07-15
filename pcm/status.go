@@ -2,7 +2,7 @@ package pcm
 
 // #include <alsa/asoundlib.h>
 //
-// static int _snd_pcm_status_alloca(snd_pcm_status_t **ptr) {
+// static int _snd_pcm_status_calloc(snd_pcm_status_t **ptr) {
 //     int rc = snd_pcm_status_malloc(ptr);
 //     if (rc < 0) return rc;
 //     memset(*ptr, 0, snd_pcm_status_sizeof());
@@ -43,7 +43,7 @@ import (
 
 func (pcm *Dev) Status() (*Status, error) {
 	s := new(Status)
-	C._snd_pcm_status_alloca(&s.inner)
+	C._snd_pcm_status_calloc(&s.inner)
 	rc := C.snd_pcm_status(pcm.inner, s.inner)
 	if rc < 0 {
 		return nil, alsa.NewError(int(rc))

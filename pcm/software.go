@@ -3,7 +3,7 @@ package pcm
 //
 // #include <alsa/asoundlib.h>
 //
-// static int _snd_pcm_sw_params_alloca(snd_pcm_sw_params_t **ptr) {
+// static int _snd_pcm_sw_params_calloc(snd_pcm_sw_params_t **ptr) {
 //     int rc = snd_pcm_sw_params_malloc(ptr);
 //     if (rc < 0) return rc;
 //     memset(*ptr, 0, snd_pcm_sw_params_sizeof());
@@ -26,7 +26,7 @@ type SoftwareParams struct {
 
 func (pcm *Dev) CurrentSoftwareParams() (*SoftwareParams, error) {
 	params := new(SoftwareParams)
-	C._snd_pcm_sw_params_alloca(&params.inner)
+	C._snd_pcm_sw_params_calloc(&params.inner)
 	rc := C.snd_pcm_sw_params_current(pcm.inner, params.inner)
 	if rc < 0 {
 		return nil, alsa.NewError(int(rc))
