@@ -22,10 +22,10 @@ import (
 
 type HardwareParams struct {
 	inner *C.snd_pcm_hw_params_t
-	pcm   *PCM
+	pcm   *Dev
 }
 
-func AnyHardwareParamsFrom(pcm *PCM) (*HardwareParams, error) {
+func (pcm *Dev) AnyHardwareParams() (*HardwareParams, error) {
 	params := new(HardwareParams)
 	rc := C._snd_pcm_hw_params_alloca(&params.inner)
 	if rc < 0 {
@@ -40,7 +40,7 @@ func AnyHardwareParamsFrom(pcm *PCM) (*HardwareParams, error) {
 	return params, nil
 }
 
-func CurrentHardwareParamsFrom(pcm *PCM) (*HardwareParams, error) {
+func (pcm *Dev) CurrentHardwareParams() (*HardwareParams, error) {
 	params := new(HardwareParams)
 	rc := C._snd_pcm_hw_params_alloca(&params.inner)
 	if rc < 0 {

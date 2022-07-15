@@ -41,7 +41,7 @@ import (
 	"github.com/ClarkGuan/go-alsa"
 )
 
-func (pcm *PCM) Status() (*Status, error) {
+func (pcm *Dev) Status() (*Status, error) {
 	s := new(Status)
 	C._snd_pcm_status_alloca(&s.inner)
 	rc := C.snd_pcm_status(pcm.inner, s.inner)

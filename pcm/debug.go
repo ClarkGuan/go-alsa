@@ -6,7 +6,7 @@ package pcm
 import "C"
 import "github.com/ClarkGuan/go-alsa"
 
-func (pcm *PCM) Dump(output alsa.Output) error {
+func (pcm *Dev) Dump(output alsa.Output) error {
 	rc := C.snd_pcm_dump(pcm.inner, (*C.snd_output_t)(output.Ptr()))
 	if rc < 0 {
 		return alsa.NewError(int(rc))
@@ -14,7 +14,7 @@ func (pcm *PCM) Dump(output alsa.Output) error {
 	return nil
 }
 
-func (pcm *PCM) DumpHardwareSetup(output alsa.Output) error {
+func (pcm *Dev) DumpHardwareSetup(output alsa.Output) error {
 	rc := C.snd_pcm_dump_hw_setup(pcm.inner, (*C.snd_output_t)(output.Ptr()))
 	if rc < 0 {
 		return alsa.NewError(int(rc))
@@ -22,7 +22,7 @@ func (pcm *PCM) DumpHardwareSetup(output alsa.Output) error {
 	return nil
 }
 
-func (pcm *PCM) DumpSoftwareSetup(output alsa.Output) error {
+func (pcm *Dev) DumpSoftwareSetup(output alsa.Output) error {
 	rc := C.snd_pcm_dump_sw_setup(pcm.inner, (*C.snd_output_t)(output.Ptr()))
 	if rc < 0 {
 		return alsa.NewError(int(rc))
@@ -30,7 +30,7 @@ func (pcm *PCM) DumpSoftwareSetup(output alsa.Output) error {
 	return nil
 }
 
-func (pcm *PCM) DumpSetup(output alsa.Output) error {
+func (pcm *Dev) DumpSetup(output alsa.Output) error {
 	rc := C.snd_pcm_dump_setup(pcm.inner, (*C.snd_output_t)(output.Ptr()))
 	if rc < 0 {
 		return alsa.NewError(int(rc))

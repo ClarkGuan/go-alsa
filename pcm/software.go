@@ -21,10 +21,10 @@ import (
 
 type SoftwareParams struct {
 	inner *C.snd_pcm_sw_params_t
-	pcm   *PCM
+	pcm   *Dev
 }
 
-func CurrentSoftwareParamsFrom(pcm *PCM) (*SoftwareParams, error) {
+func (pcm *Dev) CurrentSoftwareParams() (*SoftwareParams, error) {
 	params := new(SoftwareParams)
 	C._snd_pcm_sw_params_alloca(&params.inner)
 	rc := C.snd_pcm_sw_params_current(pcm.inner, params.inner)

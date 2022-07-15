@@ -20,7 +20,7 @@ import (
 	"github.com/ClarkGuan/go-alsa"
 )
 
-func (pcm *PCM) Info() (*Info, error) {
+func (pcm *Dev) Info() (*Info, error) {
 	info := new(Info)
 	C._snd_pcm_info_alloca(&info.inner)
 	rc := C.snd_pcm_info(pcm.inner, info.inner)
