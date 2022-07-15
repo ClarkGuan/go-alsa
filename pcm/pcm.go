@@ -216,7 +216,10 @@ func (pcm *PCM) Writei(data unsafe.Pointer, frames int) (int, error) {
 	}
 	rc := C.snd_pcm_writei(pcm.inner, data, C.snd_pcm_uframes_t(frames))
 	if rc < 0 {
-		return 0, alsa.NewError(int(rc))
+		if code := pcm.recover(int(rc), true); code < 0 {
+			return 0, alsa.NewError(code)
+		}
+		return 0, nil
 	}
 	return int(rc), nil
 }
@@ -227,7 +230,10 @@ func (pcm *PCM) Readi(data unsafe.Pointer, frames int) (int, error) {
 	}
 	rc := C.snd_pcm_readi(pcm.inner, data, C.snd_pcm_uframes_t(frames))
 	if rc < 0 {
-		return 0, alsa.NewError(int(rc))
+		if code := pcm.recover(int(rc), true); code < 0 {
+			return 0, alsa.NewError(code)
+		}
+		return 0, nil
 	}
 	return int(rc), nil
 }
@@ -238,7 +244,10 @@ func (pcm *PCM) Writen(data []unsafe.Pointer, frames int) (int, error) {
 	}
 	rc := C.snd_pcm_writen(pcm.inner, &data[0], C.snd_pcm_uframes_t(frames))
 	if rc < 0 {
-		return 0, alsa.NewError(int(rc))
+		if code := pcm.recover(int(rc), true); code < 0 {
+			return 0, alsa.NewError(code)
+		}
+		return 0, nil
 	}
 	return int(rc), nil
 }
@@ -249,7 +258,10 @@ func (pcm *PCM) Readn(data []unsafe.Pointer, frames int) (int, error) {
 	}
 	rc := C.snd_pcm_readn(pcm.inner, &data[0], C.snd_pcm_uframes_t(frames))
 	if rc < 0 {
-		return 0, alsa.NewError(int(rc))
+		if code := pcm.recover(int(rc), true); code < 0 {
+			return 0, alsa.NewError(code)
+		}
+		return 0, nil
 	}
 	return int(rc), nil
 }
@@ -354,14 +366,18 @@ func (pcm *PCM) SamplesToBytes(samples int) int {
 
 func (pcm *PCM) Recover(err error, silent bool) error {
 	if alsaErr, b := err.(*alsa.Error); b {
-		rc := C.snd_pcm_recover(pcm.inner, C.int(alsaErr.Errno), fromBool(silent))
+		rc := pcm.recover(alsaErr.Errno, silent)
 		if rc < 0 {
-			return alsa.NewError(int(rc))
+			return alsa.NewError(rc)
 		}
 		return nil
 	} else {
 		return err
 	}
+}
+
+func (pcm *PCM) recover(errno int, silent bool) int {
+	return int(C.snd_pcm_recover(pcm.inner, C.int(errno), fromBool(silent)))
 }
 
 func (pcm *PCM) SetParams(format Format, access Access, channels, rate int, resample bool, latency time.Duration) error {
